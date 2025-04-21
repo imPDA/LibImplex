@@ -1,0 +1,10 @@
+{
+    "Lua.diagnostics.globals": [
+        "Lib3DObjects",
+        "Lib3D",
+        "LibDebugLogger",
+        "Pathfinder_Markers",
+        "ZO_CreateStringId",
+        "Pathfinder_Feedback"
+    ]
+}

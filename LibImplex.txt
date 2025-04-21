@@ -1,0 +1,16 @@
+## Title: LibImplex
+## Author: imPDA
+## Description: 
+## APIVersion: 101045
+## AddOnVersion: 1
+## IsLibrary: true
+## DependsOn: Lib3D
+## OptionalDependsOn: LibDebugLogger
+## SavedVariables: 
+
+logger.lua
+
+controls.xml
+marker.lua
+
+main.lua

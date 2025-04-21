@@ -1,0 +1,57 @@
+
+        <TopLevelControl name="Pathfinder_Trace" hidden="true" mouseEnabled="true" movable="true">
+            <OnMoveStop>
+                <!-- TODO: ADD HANDLER -->
+            </OnMoveStop>
+            <OnInitialized>
+                GetControl(self, 'MainContainerAddPointBind'):SetText(
+                    'or ' .. ZO_Keybindings_GetBindingStringFromAction('PATHFINDER_ADD_POINT')
+                )
+
+                GetControl(self, 'MainContainerRemoveClosestPointBind'):SetText(
+                    'or ' .. ZO_Keybindings_GetBindingStringFromAction('PATHFINDER_REMOVE_CLOSEST_POINT')
+                )
+            </OnInitialized>
+            <Anchor point="LEFT" offsetX="100" />
+            <Dimensions x="350" y="200" />
+            <Controls>
+                <Backdrop name="$(parent)Background" inherits="ZO_DefaultBackdrop" edgeColor="00FF00" centerColor="000000" />
+                <Label name="$(parent)Header" inherits="Pathfinder_DefaultHeaderLabel" text="Trace name">
+                    <Anchor point="TOP" />
+                </Label>
+
+                <!-- TODO: Divider -->
+
+                <Control name="$(parent)MainContainer">
+                    <Anchor point="TOPLEFT" offsetY="36" />
+                    <Anchor point="BOTTOMRIGHT" />
+                    <Controls>
+                        <Label name="$(parent)TotalPoints" inherits="Pathfinder_DefaultLabel" text="Total points:">
+                            <Anchor point="TOPLEFT" offsetX="4" />
+                        </Label>
+                        <Label name="$(parent)TotalPointsValue" inherits="Pathfinder_DefaultLabel" text="-">
+                            <Anchor point="TOPLEFT" relativeTo="$(parent)TotalPoints" relativePoint="TOPRIGHT" offsetX="4" />
+                        </Label>
+
+                        <Button name="$(parent)AddPoint" inherits="ZO_DefaultButton" text="Add point" >
+                            <Anchor point="TOPLEFT" relativeTo="$(parent)TotalPoints" relativePoint="BOTTOMLEFT" offsetY="10"/>
+                        </Button>
+                        <Label name="$(parent)AddPointBind" inherits="Pathfinder_DefaultLabel" text="or -" >
+                            <Anchor point="LEFT" relativeTo="$(parent)AddPoint" relativePoint="RIGHT" offsetX="4"/>
+                        </Label>
+
+                        <Button name="$(parent)RemoveClosestPoint" inherits="ZO_DefaultButton" text="Remove closest" >
+                            <Anchor point="TOPLEFT" relativeTo="$(parent)AddPoint" relativePoint="BOTTOMLEFT" offsetY="10" />
+                        </Button>
+                        <Label name="$(parent)RemoveClosestPointBind" inherits="Pathfinder_DefaultLabel" text="or -" >
+                            <Anchor point="LEFT" relativeTo="$(parent)RemoveClosestPoint" relativePoint="RIGHT" offsetX="4"/>
+                        </Label>
+
+                        <Button name="$(parent)SaveButton" inherits="ZO_DefaultButton" text="Save" >
+                            <Anchor point="BOTTOM" offsetY="-6" />
+                        </Button>
+                        
+                    </Controls>
+                </Control>
+            </Controls>
+        </TopLevelControl>

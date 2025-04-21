@@ -1,0 +1,36 @@
+<Bindings>
+    <Layer name="SI_KEYBINDINGS_LAYER_GENERAL">
+        <Category name="SI_KEYBINDINGS_CATEGORY_PATHFINDER">
+            <Action name="PATHFINDER_TOGGLE_PATHS_MANAGER">
+                <Down>
+                    Pathfinder_PathsManager:SetHidden(not Pathfinder_PathsManager:IsHidden())
+                </Down>
+            </Action>
+            <Action name="PATHFINDER_ADD_POINT">
+                <Down>
+                    Pathfinder_AddMarker()
+                </Down>
+            </Action>
+            <Action name="PATHFINDER_REMOVE_CLOSEST_POINT">
+                <Down>
+                    Pathfinder_DeleteClosestMarker()
+                </Down>
+            </Action>
+            <Action name="PATHFINDER_SHOW_FIRST_POINT">
+                <Down>
+                    Pathfinder_ShowFirstMarker()
+                </Down>
+            </Action>
+            <Action name="PATHFINDER_SHOW_NEXT_POINT">
+                <Down>
+                    Pathfinder_ShowNextMarker()
+                </Down>
+            </Action>
+            <Action name="PATHFINDER_SHOW_CLOSEST_POINT">
+                <Down>
+                    Pathfinder_ShowClosestMarker()
+                </Down>
+            </Action>
+        </Category>
+    </Layer>
+</Bindings>

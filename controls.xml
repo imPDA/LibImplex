@@ -1,0 +1,82 @@
+<GuiXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sir.insidi.at/or/schema/esoui.xsd">
+	<Controls>
+		<TopLevelControl name="LibImplex_MarkersControl" layer="0" level="0" />
+
+		<TopLevelControl name="LibImplex_2DMarkers" layer="0" level="0">
+            <AnchorFill />
+            <OnInitialized>
+                self:Create3DRenderSpace()
+            </OnInitialized>
+        </TopLevelControl>
+
+        <Control name="LibImplex_MI">
+            <OnInitialized>
+                self:Create3DRenderSpace()
+            </OnInitialized>
+        </Control>
+
+        <!-- <TopLevelControl name="LibImplex_Links" layer="BACKGROUND">
+            <AnchorFill />
+        </TopLevelControl> -->
+
+        <!-- <Line name="LibImplex_LinkTemplate" textureFile="EsoUI/Art/Champion/champion_star_link.dds" virtual="true" /> -->
+
+        <!-- <StatusBar name="LibImplex_StatusBar" level="500" virtual="true" textureFile="EsoUI/Art/UnitAttributeVisualizer/attributeBar_dynamic_fill.dds">
+            <Dimensions y="17" />
+            <Anchor point="LEFT" />
+            <Anchor point="RIGHT" />
+            <TextureCoords left="0" right="1" top="0" bottom="0.53125"/> -->
+            
+            <!-- <LeadingEdge textureFile="EsoUI/Art/UnitAttributeVisualizer/attributeBar_dynamic_leadingEdge.dds" width="11" height="17" />
+            <LeadingEdgeTextureCoords left="0" right="0.6875" top="0" bottom="0.53125" /> -->
+
+            <!-- <OnInitialized>
+                self.gloss = self:GetNamedChild("Gloss")
+            </OnInitialized>
+
+            <OnMinMaxValueChanged>
+                self.gloss:SetMinMax(min, max)
+            </OnMinMaxValueChanged>
+
+            <OnValueChanged>
+                self.gloss:SetValue(value)
+            </OnValueChanged> -->
+        <!-- </StatusBar> -->
+
+        <!-- <TopLevelControl name="LibImplex_XXX">
+            <AnchorFill />
+            <Controls>
+                <StatusBar name="LibImplex_Bar" inherits="LibImplex_StatusBar">
+                    <Anchor point="CENTER" />
+                    <Dimensions x="100" /> -->
+                    <!-- <OnInitialized> -->
+                        <!-- self.gloss = self:GetNamedChild("Gloss") -->
+                    <!-- </OnInitialized> -->
+                    <!-- <Controls> -->
+                        <!-- <Backdrop name="$(parent)BG" inherits="ZO_DefaultBackdrop" edgeColor="FF0000" centerColor="00FF00" /> -->
+                        <!-- <StatusBar name="$(parent)Gloss" inherits="ZO_PlayerAttributeStatusBarGlossSmall_Keyboard_Template" /> -->
+                    <!-- </Controls> -->
+                <!-- </StatusBar>
+            </Controls>
+        </TopLevelControl> -->
+
+        <Texture name="LibImplex_TextureBar" hidden="true" textureFile="EsoUI/Art/UnitAttributeVisualizer/attributeBar_dynamic_fill.dds">
+            <TextureCoords left="0" right="1" top="0" bottom="0.53125"/>
+            
+            <!-- <OnInitialized> -->
+                <!-- self.gloss = self:GetNamedChild("Gloss") -->
+            <!-- </OnInitialized> -->
+            <!-- <Controls> -->
+                <!-- <Backdrop name="$(parent)BG" inherits="ZO_DefaultBackdrop" edgeColor="FF0000" centerColor="00FF00" /> -->
+                <!-- <StatusBar name="$(parent)Gloss" inherits="ZO_PlayerAttributeStatusBarGlossSmall_Keyboard_Template" /> -->
+            <!-- </Controls> -->
+        </Texture>
+        
+		<Texture name="LibImplex_MarkerTemplate" tier="DT_LOW" layer="DL_BACKGROUND" textureFileReleaseOption="RELEASE_TEXTURE_AT_ZERO_REFERENCES" virtual="true">
+            <!-- <Dimensions x="32" y="32" /> -->
+        </Texture>
+        <!-- <Label name="Pathfinder_DefaultHeaderLabel" font="ZoFontHeader3" wrapMode="ELLIPSIS" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" virtual="true" />
+        <Label name="Pathfinder_DefaultLabel" font="ZoFontGame" wrapMode="ELLIPSIS" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" virtual="true" /> -->
+
+	</Controls>
+</GuiXml>
