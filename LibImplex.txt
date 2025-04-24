@@ -1,12 +1,11 @@
 ## Title: LibImplex
 ## Author: imPDA
-## Description: 
+## Description: Simple (hope so) marker "engine"
 ## APIVersion: 101045
 ## AddOnVersion: 1
 ## IsLibrary: true
-## DependsOn: Lib3D
-## OptionalDependsOn: LibDebugLogger
-## SavedVariables: 
+## OptionalDependsOn: LibDebugLogger Lib3D
+; ## SavedVariables: 
 
 logger.lua
 
@@ -14,3 +13,6 @@ controls.xml
 marker.lua
 
 main.lua
+
+examples/vvardenfell.lua
+; examples/uniticon.lua

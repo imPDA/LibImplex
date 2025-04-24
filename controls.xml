@@ -60,6 +60,11 @@
             </Controls>
         </TopLevelControl> -->
 
+        
+        <Label name="LibImplex_DistanceLabelTemplate" font="ZoFontWinH2" text="-" virtual="true">
+            <Anchor point="TOP" relativePoint="BOTTOM" offsetY="-8" />
+        </Label>
+
         <Texture name="LibImplex_TextureBar" hidden="true" textureFile="EsoUI/Art/UnitAttributeVisualizer/attributeBar_dynamic_fill.dds">
             <TextureCoords left="0" right="1" top="0" bottom="0.53125"/>
             
@@ -72,9 +77,8 @@
             <!-- </Controls> -->
         </Texture>
         
-		<Texture name="LibImplex_MarkerTemplate" tier="DT_LOW" layer="DL_BACKGROUND" textureFileReleaseOption="RELEASE_TEXTURE_AT_ZERO_REFERENCES" virtual="true">
-            <!-- <Dimensions x="32" y="32" /> -->
-        </Texture>
+		<Texture name="LibImplex_MarkerTemplate" tier="DT_LOW" layer="DL_BACKGROUND" textureFileReleaseOption="RELEASE_TEXTURE_AT_ZERO_REFERENCES" virtual="true" />
+
         <!-- <Label name="Pathfinder_DefaultHeaderLabel" font="ZoFontHeader3" wrapMode="ELLIPSIS" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" virtual="true" />
         <Label name="Pathfinder_DefaultLabel" font="ZoFontGame" wrapMode="ELLIPSIS" color="INTERFACE_COLOR_TYPE_TEXT_COLORS:INTERFACE_TEXT_COLOR_NORMAL" virtual="true" /> -->
 
