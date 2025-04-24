@@ -6,9 +6,6 @@ local GetWorldDimensionsOfViewFrustumAtDepth = GetWorldDimensionsOfViewFrustumAt
 local Set3DRenderSpaceToCurrentCamera = Set3DRenderSpaceToCurrentCamera
 local GetUnitRawWorldPosition = GetUnitWorldPosition
 
-local pow = math.pow
-local sqrt = math.sqrt
-local floor = math.floor
 local lerp = zo_lerp
 local clampedPercentBetween = zo_clampedPercentBetween
 local distance3D = zo_distance3D
@@ -52,12 +49,6 @@ local function class(base)
 	return cls
 end
 
-local mt = {
-    __call = function(cls, obj)
-        return setmetatable(obj, cls)
-    end
-}
-
 -- ----------------------------------------------------------------------------
 
 local function GetPool()
@@ -86,106 +77,8 @@ end
 
 -- ----------------------------------------------------------------------------
 
---- @class Vector
-local Vector = setmetatable({}, mt)
-Vector.__index = Vector
-
-function Vector.len(v)
-    return sqrt(v:dot(v))
-end
-
-function Vector.add(v1, v2)
-    return Vector({
-        v1[1] + v2[1],
-        v1[2] + v2[2],
-        v1[3] + v2[3]
-    })
-end
-
-function Vector.sub(v1, v2)
-    return Vector({
-        v1[1] - v2[1],
-        v1[2] - v2[2],
-        v1[3] - v2[3]
-    })
-end
-
-function Vector.negate(v)
-    return Vector({-v[1], -v[2], -v[3]})
-end
-
-function Vector.multiply(v, scalar)
-    -- TODO: get rid of assertion
-    -- assert(type(scalar) == 'number', 'Scalar must be numeric type value, got %s instead', type(scalar))
-    return Vector({v[1] * scalar, v[2] * scalar, v[3] * scalar})
-end
-
-function Vector.dot(v1, v2)
-    return v1[1] * v2[1] + v1[2] * v2[2] + v1[3] * v2[3]
-end
-
-function Vector.cross(v1, v2)
-    return Vector({
-        v1[2] * v2[3] - v1[3] * v2[2],
-        v1[3] * v2[1] - v1[1] * v2[3],
-        v1[1] * v2[2] - v1[2] * v2[1]
-    })
-end
-
-function Vector.unit(v)
-    local inverse_length = 1 / v:len()
-    return v * inverse_length
-end
-
-function Vector.coordinates(v)
-    return v[1], v[2], v[3]
-end
-
--- function Vector.lt(v1, v2)
---     return v1:dot(v1) < v2:dot(v2)
--- end
-
--- function Vector.le(v1, v2)
---     return v1:dot(v1) <= v2:dot(v2)
--- end
-
-function Vector.eq(v1, v2)
-    return v1[1] == v2[1] and v1[2] == v2[2] and v1[3] == v2[3]
-end
-
-Vector.__eq = Vector.eq
-Vector.__len = Vector.len
-Vector.__add = Vector.add
-Vector.__sub = Vector.sub
-Vector.__unm = Vector.negate
-Vector.__mul = Vector.multiply
--- Vector.__lt = Vector.lt
--- Vector.__le = Vector.le
-
--- ----------------------------------------------------------------------------
-
--- local function GetPlayerVector()
---     local zoneId, x, y, z = GetUnitRawWorldPosition('player')
---     return Vector({x, y, z})
--- end
-
--- local function GetPlayerCoordinates()
---     local zoneId, x, y, z = GetUnitRawWorldPosition('player')
---     return x, y, z
--- end
-
---[[
-* GetUnitWorldPosition(*string* _unitTag_)
-** _Returns:_ *integer* _zoneId_, *integer* _worldX_, *integer* _worldY_, *integer* _worldZ_
-
-* GetUnitRawWorldPosition(*string* _unitTag_)
-** _Returns:_ *integer* _zoneId_, *integer* _worldX_, *integer* _worldY_, *integer* _worldZ_
-]]
-
--- ----------------------------------------------------------------------------
-
 --- @class Marker
---- @field position Vector Position
+--- @field position table|Vector Position
 --- @field texture string Texture
 --- @field control ZO_Object Control
 --- @field updateFunction function|nil Update function
@@ -193,13 +86,14 @@ Vector.__mul = Vector.multiply
 local Marker = class()
 
 --- Constructor for Marker
---- @param position table X Y Z
+--- @param position table|Vector X Y Z
+--- @param orientation table Pitch Yaw Roll
 --- @param texture string Texture
 --- @param size table W x H
 --- @param color table RGB
 --- @param updateFunction function|nil Update function
 function Marker:__init(position, orientation, texture, size, color, updateFunction)
-    self.position = Vector(position)
+    self.position = position
     self.orientation = orientation
 
     self.updateFunction = updateFunction
@@ -220,6 +114,7 @@ function Marker:Update(...)
     end
 end
 
+--[[
 --- Get distance to point
 --- @param point Vector
 --- @return number @Distance to point in space
@@ -231,6 +126,7 @@ function Marker:DistanceXZ(point)
     local dist = (point - self.position)
     return sqrt(pow(dist[1], 2) + pow(dist[3], 2))
 end
+--]]
 
 function Marker:Delete()
     GetPool():ReleaseObject(self.objectKey)
@@ -247,9 +143,6 @@ local MARKERS_CONTROL_2D_NAME = 'LibImplex_2DMarkers'
 local UI_WIDTH, UI_HEIGHT = GuiRoot:GetDimensions()
 UI_HEIGHT = -UI_HEIGHT
 
-local VF, VR, VU, VC = Vector({0, 0, 0}), Vector({0, 0, 0}), Vector({0, 0, 0}), Vector({0, 0, 0})
-local VP = Vector{{0, 0, 0}}
-
 local cX, cY, cZ = 0, 0, 0
 local rX, rY, rZ = 0, 0, 0
 local uX, uY, uZ = 0, 0, 0
@@ -264,53 +157,32 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
         local markerControl = marker.control
         local x, y, z = self.position[1], self.position[2], self.position[3]
 
-        -- local D = self.position - VC
-        local dX = x - cX
-        local dY = y - cY
-        local dZ = z - cZ
+        local dX, dY, dZ = x - cX, y - cY, z - cZ
 
-        -- local Z = VF:dot(D)
-        -- local Z = VF[1] * D[1] + VF[2] * D[2] + VF[3] * D[3]
-        -- local Z = VF[1] * Dx + VF[2] * Dy + VF[3] * Dz
         local Z = fX * dX + fY * dY + fZ * dZ
-
-        -- if Vector.len(self.position - VP) < 2000 then
-        --     Log('Difference: z: %f, distance: %f', Z, Vector.len(self.position - VP))
-        -- end
 
         if Z < 0 then
             markerControl:SetHidden(true)
             return
         end
 
-        markerControl:SetHidden(false)  -- optimizable?
+        markerControl:SetHidden(false)  -- TODO: optimizable?
 
-        -- TODO: 100% optimizable
-        -- local X = VR:dot(D)
-        -- local Y = VU:dot(D)
-        -- local X = VR[1] * D[1] + VR[2] * D[2] + VR[3] * D[3]
-        -- local Y = VU[1] * D[1] + VU[2] * D[2] + VU[3] * D[3]
-        -- local X = VR[1] * dX + VR[2] * dY + VR[3] * dZ
-        -- local Y = VU[1] * dX + VU[2] * dY + VU[3] * dZ
-        local X = rX * dX + rY * dY + rZ * dZ
+        local X = rX * dX + rZ * dZ  -- rY * dY can be ignored, rY = 0 because it is vector in XZ plane
         local Y = uX * dX + uY * dY + uZ * dZ
 
         local w, h = GetWorldDimensionsOfViewFrustumAtDepth(Z)
         local scaleW = UI_WIDTH / w
         local scaleH = UI_HEIGHT / h
 
-        -- marker:ClearAnchors()
         markerControl:SetAnchor(CENTER, GuiRoot, CENTER, X * scaleW, Y * scaleH)
 
-        -- if updateFunctions then
-        -- local distance = marker:DistanceTo(VP)
         local distance = distance3D(x, y, z, pX, pY, pZ)
 
         for i = 1, #updateFunctions do
             updateFunctions[i](marker, distance)
             if markerControl:IsHidden() then return end
         end
-        --end
     end
 
     self.base.__init(self, position, orientation, texture, size, color, update)
@@ -323,53 +195,13 @@ end
 function Marker2D.UpdateVectors()
     Set3DRenderSpaceToCurrentCamera(MARKERS_CONTROL_2D_NAME)
 
-    --[[
-    local cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())
-    local fX, fY, fZ = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
-    local rX, rY, rZ = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
-    local uX, uY, uZ = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
-
-    optimization?
-    VC = Vector({cX, cY, cZ})
-	VF = Vector({fX, fY, fZ})
-	VR = Vector({rX, rY, rZ})
-	VU = Vector({uX, uY, uZ})
-    --]]
-
-    --[[
-    VC[1], VC[2], VC[3] = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())
-	VF[1], VF[2], VF[3] = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
-	VR[1], VR[2], VR[3] = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
-	VU[1], VU[2], VU[3] = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
-
-    _, VP[1], VP[2], VP[3] = GetUnitRawWorldPosition('player')
-    --]]
-
-    ---[[
     cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())
     fX, fY, fZ = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
     rX, rY, rZ = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
     uX, uY, uZ = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
 
     _, pX, pY, pZ = GetUnitRawWorldPosition('player')
-    --]]
 end
-
---[[
-local function GetPlayerOnScreenCoordinates()
-    local D = VP - VC
-
-    local pX = VR:dot(D)
-    local pY = VU:dot(D)
-    local pZ = VF:dot(D)
-
-    local w, h = GetWorldDimensionsOfViewFrustumAtDepth(pZ)
-    local scaleW = UI_WIDTH / w
-    local scaleH = UI_HEIGHT / h
-
-    return pX * scaleW, -pY * scaleH, pZ
-end
---]]
 
 -- ----------------------------------------------------------------------------
 
@@ -383,15 +215,12 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
         local markerControl = self.control
         local x, y, z = self.position[1], self.position[2], self.position[3]
 
-        -- if updateFunctions then
-        -- local distance = marker:DistanceTo(VP)
         local distance = distance3D(x, y, z, pX, pY, pZ)
 
         for i = 1, #updateFunctions do
             updateFunctions[i](marker, distance)
             if markerControl:IsHidden() then return end
         end
-        -- end
     end
 
     self.base.__init(self, position, orientation, texture, size, color, update)
@@ -419,6 +248,7 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
 end
 
 -- ----------------------------------------------------------------------------
+-- TODO: optimize lerp and clamp functions
 
 local function ChangeAlphaWithDistance(minAlpha, maxAlpha, minDistance, maxDistance)
     local function inner(marker, distance)
@@ -438,8 +268,6 @@ local function Change3DLocalDimensionsWithDistance(minDimensions, maxDimensions,
 end
 
 local function HideIfTooFar(maxDistance)
-    -- return function() end
-
     local function inner(marker, distance)
         marker.control:SetHidden(distance > maxDistance)
     end
@@ -457,7 +285,7 @@ end
 
 -- ----------------------------------------------------------------------------
 
-LibImplex = {}
+LibImplex = LibImplex or {}
 
 LibImplex.Marker = {
     Marker2D = Marker2D,
@@ -475,22 +303,21 @@ LibImplex.Pool = {
     GetPool = GetPool,
 }
 
-LibImplex.Vector = Vector
-LibImplex.GetVectorForward = function() return {fX, fY, fZ} end  -- function() return VF end
-LibImplex.GetVectorRight = function() return {rX, rY, rZ} end  -- function() return VR end
-LibImplex.GetVectorUp = function() return {uX, uY, uZ} end  -- function() return VU end
+LibImplex.GetVectorForward = function() return {fX, fY, fZ} end
+LibImplex.GetVectorRight = function() return {rX, rY, rZ} end
+LibImplex.GetVectorUp = function() return {uX, uY, uZ} end
 
--- local function calculateEulerAngles()
---     local pitch = math.asin(-VF[2])
---     local yaw = math.atan2(VF[1], VF[3])
---     local roll = math.atan2(VR[2], VU[2])
+local function calculateEulerAngles()
+    local pitch = math.asin(-fY)
+    local yaw = math.atan2(fX, fZ)
+    local roll = math.atan2(rY, uY)
 
---     return pitch, yaw, roll
--- end
+    return pitch, yaw, roll
+end
 
--- LibImplex.Camera = {
---     GetOrientation = calculateEulerAngles
--- }
+LibImplex.Camera = {
+    GetOrientation = calculateEulerAngles
+}
 
 LibImplex.UpdateFunction = {
     HideIfTooFar = HideIfTooFar,

@@ -11,6 +11,7 @@ logger.lua
 
 controls.xml
 marker.lua
+vector.lua
 
 main.lua
 
