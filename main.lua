@@ -12,41 +12,48 @@ local EVENT_NAMESPACE = 'LIBIMPLEX_EVEN_NAMESPACE'
 
 -- ----------------------------------------------------------------------------
 
-local function average(tbl)
+local function stats(tbl)
 	local total = 0
+	local max = 0
 	local length = #tbl
 
 	for i = 1, length do
+		if tbl[i] > max then
+			max = tbl[i]
+		end
 		total = total + tbl[i]
 		tbl[i] = nil
 	end
 
-	return total / length
+	return total / length, max
 end
 
 function lib:OnPlayerActivated(initial)
 	local pool = LibImplex.Pool.GetPool()
 	local updateVectors = LibImplex.Marker.Marker2D.UpdateVectors
 
-
+	local N = 200
 	local updateArray = {}
 	local counter = 0
 
 	local function updateMarkers()
 		local start = GetGameTimeMilliseconds()
 
-		updateVectors()
+		for _ = 1, N do
+			updateVectors()
 
-		for _, obj in pairs(pool:GetActiveObjects()) do
-			obj.m_Marker:Update()
+			for _, obj in pairs(pool:GetActiveObjects()) do
+				obj.m_Marker:Update()
+			end
 		end
 
 		local finish = GetGameTimeMilliseconds()
 		counter = counter + 1
-		updateArray[counter] = finish - start
+		updateArray[counter] = (finish - start) / N
 
 		if counter >= 100 then
-			Log('Avg update time: %d us', average(updateArray) * 1000)
+			local avg, max = stats(updateArray)
+			Log('Avg update time: %d us, max: %d us', avg * 1000, max * 1000)
 			counter = 0
 		end
 	end

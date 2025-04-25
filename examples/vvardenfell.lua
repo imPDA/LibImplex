@@ -1,6 +1,6 @@
 local Log = LibImplex_Logger()
 
-local HIDE_DISTANT = false
+local HIDE_DISTANT = true
 
 local PI = math.pi
 local Vector = LibImplex.Vector
@@ -132,15 +132,16 @@ local function vvardenfell()
     local A_BIT_HIGER = Vector({0, 350, 0})
     local HIGHER = Vector({0, 1400, 0})
 
-    local hideMarkerIfClose = LibImplex.UpdateFunction.HideIfTooClose(500)
-    local changeAlphaWithDistance = LibImplex.UpdateFunction.ChangeAlphaWithDistance(0.2, 1, 20000, 5000)
+    -- local hideMarkerIfClose = LibImplex.UpdateFunction.HideIfTooClose(500)
+    -- local changeAlphaWithDistance = LibImplex.UpdateFunction.ChangeAlphaWithDistance(0.2, 1, 20000, 5000)
 
-    local hideDistantWayshrineMarker = HIDE_DISTANT and LibImplex.UpdateFunction.HideIfTooFar(21500) or function() end
+    -- local hideDistantWayshrineMarker = HIDE_DISTANT and LibImplex.UpdateFunction.HideIfTooFar(21500) or function() end
     local hideDistantWayshrineSign = LibImplex.UpdateFunction.HideIfTooFar(12000)
 
     for i = 1, #WAYSHRINES do
         local wayshrinePosition = WAYSHRINES[i]
 
+        --[[
         local wayshrineMarker = LibImplex.Marker.Marker2D(
             wayshrinePosition + A_BIT_HIGER,    -- position, can be array {x, y, z} or Vector({x, y ,z})
             nil,                                -- orientation {pitch, yaw, roll, [useDistanceBuffer]}, only for 3D markers! 2D markers ignores this
@@ -152,6 +153,18 @@ local function vvardenfell()
             hideDistantWayshrineMarker,         -- each update function must be callable with [marker, distance] arguments 
             changeAlphaWithDistance,            -- (distance = distance from player to a marker)
             updateDistanceLabel                 -- you can use some predefined functions from LibImplex.UpdateFunction or write custom like this one
+        )
+        ]]
+
+        local wayshrineMarker = LibImplex.Marker.POI(
+            wayshrinePosition + A_BIT_HIGER,
+            WAYSHRINE_TEXTURE,
+            TEXTURE_SIZE_2D,
+            COLOR1,
+            5,
+            215,
+            1,
+            0.2
         )
 
         addDistanceLabel(wayshrineMarker)
@@ -168,19 +181,16 @@ local function vvardenfell()
         )
     end
 
-    local hideDistantPOIMarker = HIDE_DISTANT and LibImplex.UpdateFunction.HideIfTooFar(23500) or function() end
-
     local function POIMarker(position, texture)
-        local poiMarker = LibImplex.Marker.Marker2D(
+        local poiMarker = LibImplex.Marker.POI(
             position + A_BIT_HIGER,
-            nil,
             texture,
             TEXTURE_SIZE_2D,
             COLOR2,
-            hideMarkerIfClose,
-            hideDistantPOIMarker,
-            changeAlphaWithDistance,
-            updateDistanceLabel
+            5,
+            235,
+            1,
+            0.2
         )
 
         addDistanceLabel(poiMarker)
