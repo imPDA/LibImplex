@@ -15,5 +15,8 @@ vector.lua
 
 main.lua
 
+textures.lua
+
 examples/vvardenfell.lua
 ; examples/uniticon.lua
+examples/groundmarkers.lua

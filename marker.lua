@@ -151,7 +151,7 @@ local fX, fY, fZ = 0, 0, 0
 local pX, pY, pZ = 0, 0, 0
 
 function Marker2D:__init(position, orientation, texture, size, color, ...)
-    local updateFunctions = ... and {...}
+    local updateFunctions = {...}
 
     local function update(marker)
         local markerControl = marker.control
@@ -289,7 +289,7 @@ end
 local Marker3D = class(Marker)
 
 function Marker3D:__init(position, orientation, texture, size, color, ...)
-    local updateFunctions = ... and {...}
+    local updateFunctions = {...}
 
     local function update(marker)
         local markerControl = self.control
@@ -298,12 +298,14 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
         local distance = distance3D(x, y, z, pX, pY, pZ)
 
         for i = 1, #updateFunctions do
-            updateFunctions[i](marker, distance, {pX, pY, pZ})
+            updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
             if markerControl:IsHidden() then return end
         end
     end
 
-    self.base.__init(self, position, orientation, texture, size, color, update)
+    local needUpdates = #updateFunctions > 0
+
+    self.base.__init(self, position, orientation, texture, size, color, needUpdates and update or nil)
 
     local control = self.control
 

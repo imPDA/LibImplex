@@ -1,48 +1,78 @@
-local TEXTURE = 'esoui/art/miscellaneous/gamepad/gp_bullet_ochre.dds'
+local Log = LibImplex_Logger()
 
-local function followCameraView3D()
-    local function inner(marker)
-        marker.control:Set3DRenderSpaceForward( unpack(LibImplex.GetVectorForward())    )
-        marker.control:Set3DRenderSpaceRight(   unpack(LibImplex.GetVectorRight())      )
-        marker.control:Set3DRenderSpaceUp(      unpack(LibImplex.GetVectorUp())         )
-    end
+-- local TEXTURE = 'esoui/art/miscellaneous/gamepad/gp_bullet_ochre.dds'
+local TEXTURE = 'LibImplex/textures/zero.dds'
 
-    return inner
+local TEXTURES = LibImplex.Textures.Numbers
+
+local function followCameraDirection3D(marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
+    local markerControl = marker.control
+
+    markerControl:Set3DRenderSpaceForward(fX, fY, fZ)
+    markerControl:Set3DRenderSpaceRight(rX, rY, rZ)
+    markerControl:Set3DRenderSpaceUp(uX, uY, uZ)
 end
 
-local function followViewDirection3D()
-    local function inner(marker)
-        marker.control:Set3DRenderSpaceForward( unpack(LibImplex.GetVectorForward())    )
-        marker.control:Set3DRenderSpaceRight(   unpack(LibImplex.GetVectorRight())      )
-    end
 
-    return inner
+local function followViewDirection3D(marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
+    local markerControl = marker.control
+
+    markerControl:Set3DRenderSpaceForward(fX, fY, fZ)
+    markerControl:Set3DRenderSpaceRight(rX, rY, rZ)
 end
+
 
 local function followUnit3D(unitTag, offsetX, offsetY, offsetZ)
     offsetX = offsetX or 0
     offsetY = offsetY or 0
     offsetZ = offsetZ or 0
 
-    local function inner(marker)
+    local function inner(marker, distance, pX, pY, pZ)
         local _, wX, wY, wZ = GetUnitRawWorldPosition(unitTag)
-        local rX, rY, rZ = WorldPositionToGuiRender3DPosition(wX+offsetX, wY+offsetY, wZ+offsetZ)
-        marker.control:Set3DRenderSpaceOrigin(rX, rY, rZ)
+        local renderX, renderY, renderZ = WorldPositionToGuiRender3DPosition(wX+offsetX, wY+offsetY, wZ+offsetZ)
+        marker.control:Set3DRenderSpaceOrigin(renderX, renderY, renderZ)
     end
 
     return inner
 end
 
-local function addUnitIcon()
-    LibImplex.Marker.Marker3D(
-        {0, 0, 0}, {0, 0, 0, true}, TEXTURE, {0.5, 0.5}, {0.8, 0.8, 0},
-        followViewDirection3D(),
-        followUnit3D('player', nil, 300, nil)
+local function createUnitIcon(unitName, texture)
+    return LibImplex.Marker.Marker3D(
+        {0, 0, 0}, {0, 0, 0, true}, texture, {0.5, 0.5}, nil,
+        followViewDirection3D,
+        followUnit3D(unitName, nil, 500, nil)
     )
+end
+
+local GROUP_MARKERS = {nil, nil}
+
+local function onGroupUpdate()
+    local groupSize = GetGroupSize()
+    local groupMarkers = #GROUP_MARKERS
+
+    Log('There are %d markers atm, group size: %d', groupMarkers, groupSize)
+
+    if groupSize > groupMarkers then
+        Log('Lets add markers')
+        for i = 1, groupSize - groupMarkers do
+            local next = groupMarkers + i
+            Log('Adding #%d', next)
+            GROUP_MARKERS[next] = createUnitIcon('group' .. next, TEXTURES[next])
+        end
+    elseif groupSize < groupMarkers then
+        Log('Lets remove markers')
+        for i = 1, groupMarkers - groupSize do
+            local last = groupMarkers + i - 1
+            Log('Removing #%d', last)
+            GROUP_MARKERS[last]:Delete()
+            GROUP_MARKERS[last] = nil
+        end
+    end
 end
 
 -- ----------------------------------------------------------------------------
 
 do
-    zo_callLater(addUnitIcon, 1000)
+    EVENT_MANAGER:RegisterForEvent('LIB_IMPLEX_EXAMPLES_UNITS', EVENT_GROUP_UPDATE, onGroupUpdate)
+    zo_callLater(onGroupUpdate, 1000)
 end
