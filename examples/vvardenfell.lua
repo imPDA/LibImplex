@@ -1,7 +1,5 @@
 local Log = LibImplex_Logger()
 
-local HIDE_DISTANT = true
-
 local PI = math.pi
 local Vector = LibImplex.Vector
 

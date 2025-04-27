@@ -32,7 +32,7 @@ function lib:OnPlayerActivated(initial)
 	local pool = LibImplex.Pool.GetPool()
 	local updateVectors = LibImplex.Marker.Marker2D.UpdateVectors
 
-	local N = 50
+	local N = 10
 	local updateArray = {}
 	local counter = 0
 
@@ -53,7 +53,7 @@ function lib:OnPlayerActivated(initial)
 
 		if counter >= 100 then
 			local avg, max = stats(updateArray)
-			Log('Upadatin %d markers, avg update time: %d us, max: %d us', pool:GetActiveObjectCount(), avg * 1000, max * 1000)
+			Log('Updating %d markers, avg update time: %d us, max: %d us', pool:GetActiveObjectCount(), avg * 1000, max * 1000)
 			counter = 0
 		end
 	end
