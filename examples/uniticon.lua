@@ -1,7 +1,7 @@
 local Log = LibImplex_Logger()
 
 -- local TEXTURE = 'esoui/art/miscellaneous/gamepad/gp_bullet_ochre.dds'
-local TEXTURE = 'LibImplex/textures/zero.dds'
+local ARROW = 'LibImplex/textures/arrowwithstroke.dds'
 
 local TEXTURES = LibImplex.Textures.Numbers
 
@@ -44,6 +44,18 @@ local function createUnitIcon(unitName, texture)
     )
 end
 
+local function createPlayerIcon()
+    local icon = LibImplex.Marker.Marker3D(
+        {0, 0, 0}, {0, 0, 0, true}, ARROW, {0.7, 0.7}, nil,
+        followViewDirection3D,
+        followUnit3D('player', nil, 250, nil)
+    )
+
+    icon.control:SetAlpha(0.9)
+
+    return icon
+end
+
 local GROUP_MARKERS = {nil, nil}
 
 local function onGroupUpdate()
@@ -74,5 +86,6 @@ end
 
 do
     EVENT_MANAGER:RegisterForEvent('LIB_IMPLEX_EXAMPLES_UNITS', EVENT_GROUP_UPDATE, onGroupUpdate)
-    zo_callLater(onGroupUpdate, 1000)
+    zo_callLater(onGroupUpdate, 2000)
+    zo_callLater(createPlayerIcon, 2000)
 end

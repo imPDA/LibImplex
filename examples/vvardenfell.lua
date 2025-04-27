@@ -124,13 +124,85 @@ end
 
 -- ----------------------------------------------------------------------------
 
+local A_BIT_HIGER = Vector({0, 350, 0})
+local HIGHER = Vector({0, 1400, 0})
+
+local function POIMarker(position, texture)
+    local poiMarker = LibImplex.Marker.POI(
+        position + A_BIT_HIGER,
+        texture,
+        TEXTURE_SIZE_2D,
+        COLOR2,
+        5,
+        235,
+        1,
+        0.2
+    )
+
+    addDistanceLabel(poiMarker)
+
+    return poiMarker
+end
+
+local function addUnknownPOI()
+    if not Lib3D then return end
+
+    local CLOSE_THRESHOLD = 4000^2
+
+    local function close(x1, y1, z1, x2, y2, z2)
+        local diff = (x2 - x1)^2 + (z2 - z1)^2
+        return diff < CLOSE_THRESHOLD
+    end
+
+    local function exists(zoneIndex, x, y, z)
+        if zoneIndex ~= 469 then return end
+
+        for i = 1, #WAYSHRINES do
+            local w = WAYSHRINES[i]
+            if close(w[1], w[2], w[3], x, y, z) then return true end
+        end
+
+        for i = 1, #PUBLIC_DUNGEONS do
+            local pd = PUBLIC_DUNGEONS[i][1]
+            if close(pd[1], pd[2], pd[3], x, y, z) then return true end
+        end
+
+        for i = 1, #GROUP_BOSSES do
+            local gb = GROUP_BOSSES[i][1]
+            if close(gb[1], gb[2], gb[3], x, y, z) then return true end
+        end
+
+        for i = 1, #SKYSHARDS do
+            local s = SKYSHARDS[i]
+            if close(s[1], s[2], s[3], x, y, z) then return true end
+        end
+
+        for i = 1, #DELVES do
+            local d = DELVES[i][1]
+            if close(d[1], d[2], d[3], x, y, z) then return true end
+        end
+    end
+
+    local zoneIndex = GetUnitZoneIndex('player')
+    for i = 1, GetNumPOIs(zoneIndex) do
+        local poiNX, poiNZ, pinType, texture = GetPOIMapInfo(zoneIndex, i)
+
+        local poiX, poiZ = Lib3D:LocalToWorld(poiNX, poiNZ)
+        poiX, poiZ = poiX * 100, poiZ * 100
+
+        Log('POI: %d %d', poiX, poiZ)
+
+        if not exists(zoneIndex, poiX, nil, poiZ) then
+            Log('Adding unknown POI: %d %d', poiX, poiZ)
+            POIMarker({poiX, 14000, poiZ}, texture)
+        end
+    end
+end
+
 -- Vvardenfell: zoneIdnex 469, zoneId 849
 local function vvardenfell()
     LibImplex.Pool.GetPool():ReleaseAllObjects()
     if GetZoneId(GetUnitZoneIndex('player')) ~= 849 then return end
-
-    local A_BIT_HIGER = Vector({0, 350, 0})
-    local HIGHER = Vector({0, 1400, 0})
 
     -- local hideMarkerIfClose = LibImplex.UpdateFunction.HideIfTooClose(500)
     -- local changeAlphaWithDistance = LibImplex.UpdateFunction.ChangeAlphaWithDistance(0.2, 1, 20000, 5000)
@@ -179,23 +251,6 @@ local function vvardenfell()
             hideDistantWayshrineSign,
             addWayshrineSignAnimation
         )
-    end
-
-    local function POIMarker(position, texture)
-        local poiMarker = LibImplex.Marker.POI(
-            position + A_BIT_HIGER,
-            texture,
-            TEXTURE_SIZE_2D,
-            COLOR2,
-            5,
-            235,
-            1,
-            0.2
-        )
-
-        addDistanceLabel(poiMarker)
-
-        return poiMarker
     end
 
     for i = 1, #PUBLIC_DUNGEONS do
@@ -272,5 +327,8 @@ end
 
 do
     initializeWayshrineAnimation()
-    EVENT_MANAGER:RegisterForEvent('LIB_IMPLEX_EXAMPLES_VVARDENFELL', EVENT_PLAYER_ACTIVATED, vvardenfell)
+    EVENT_MANAGER:RegisterForEvent('LIB_IMPLEX_EXAMPLES_VVARDENFELL', EVENT_PLAYER_ACTIVATED, function() 
+        vvardenfell()
+        addUnknownPOI()
+    end)
 end
