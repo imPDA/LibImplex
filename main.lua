@@ -9,6 +9,18 @@ lib.displayName = 'LibImplex'
 lib.version = '0.0.1'
 
 local EVENT_NAMESPACE = 'LIBIMPLEX_EVEN_NAMESPACE'
+local EVENT_BEFORE_UPDATE = 1
+local EVENT_AFTER_UPDATE = 2
+
+local EVENT_NAMES = {
+	[EVENT_BEFORE_UPDATE] = 'EVENT_BEFORE_UPDATE',
+	[EVENT_AFTER_UPDATE] = 'EVENT_AFTER_UPDATE',
+}
+
+lib.callbacks = {
+	[EVENT_BEFORE_UPDATE] = {},
+	[EVENT_AFTER_UPDATE] = {},
+}
 
 -- ----------------------------------------------------------------------------
 
@@ -40,11 +52,14 @@ function lib:OnPlayerActivated(initial)
 		local start = GetGameTimeMilliseconds()
 
 		for _ = 1, N do
+			lib:FireCallbacks(EVENT_BEFORE_UPDATE)
 			updateVectors()
 
 			for _, obj in pairs(pool:GetActiveObjects()) do
 				obj.m_Marker:Update()
 			end
+
+			lib:FireCallbacks(EVENT_AFTER_UPDATE)
 		end
 
 		local finish = GetGameTimeMilliseconds()
@@ -61,6 +76,24 @@ function lib:OnPlayerActivated(initial)
 	EVENT_MANAGER:RegisterForUpdate(EVENT_NAMESPACE, 0, updateMarkers)
 end
 
+function lib:RegisterForEvent(namespace, event, callback)
+	if self.callbacks[event][namespace] then
+		error(('Event %s for %s already registered'):format(EVENT_NAMES[event], namespace))
+	end
+
+	self.callbacks[event][namespace] = callback
+end
+
+function lib:UnregisterForEvent(namespace, event)
+	self.callbacks[event][namespace] = nil
+end
+
+function lib:FireCallbacks(event)
+	for _, callback in pairs(self.callbacks[event]) do
+		callback()  -- TODO: pcall
+	end
+end
+
 function lib:OnLoad()
 	SLASH_COMMANDS['/r'] = SLASH_COMMANDS['/reloadui']
 
@@ -73,3 +106,12 @@ EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_ADD_ON_LOADED, function(_,
 
     lib:OnLoad()
 end)
+
+LibImplex = LibImplex or {}
+
+LibImplex.EVENT_MANAGER = {
+	RegisterForEvent = function(...) lib:RegisterForEvent(...) end,
+	UnregisterForEvent = function(...) lib:UnregisterForEvent(...) end,
+	EVENT_BEFORE_UPDATE = EVENT_BEFORE_UPDATE,
+	EVENT_AFTER_UPDATE = EVENT_AFTER_UPDATE,
+}
