@@ -10,6 +10,14 @@ local lerp = zo_lerp
 local clampedPercentBetween = zo_clampedPercentBetween
 local distance3D = zo_distance3D
 local sqrt = math.sqrt
+local tan = math.tan
+local floor = math.floor
+
+-- local PI_360 = math.pi / 360
+-- local function getK()
+--     local fov = GetSetting(SETTING_TYPE_CAMERA, CAMERA_SETTING_THIRD_PERSON_FIELD_OF_VIEW)
+--     return 2 * tan(fov * PI_360)  -- 2 * tan(FOV/2 in rad)
+-- end
 
 -- ----------------------------------------------------------------------------
 
@@ -110,9 +118,7 @@ function Marker:__init(position, orientation, texture, size, color, updateFuncti
 end
 
 function Marker:Update(...)
-    if self.updateFunction then
-        self:updateFunction(...)
-    end
+    self:updateFunction(...)
 end
 
 --[[
@@ -122,12 +128,14 @@ end
 function Marker:DistanceTo(point)
     return (point - self.position):len()
 end
+--]]
 
 function Marker:DistanceXZ(point)
-    local dist = (point - self.position)
-    return sqrt(pow(dist[1], 2) + pow(dist[3], 2))
+    local dx = point[1] - self.position[1]
+    local dz = point[3] - self.position[3]
+
+    return sqrt(dx * dx + dz * dz)
 end
---]]
 
 function Marker:Delete()
     GetPool():ReleaseObject(self.objectKey)
@@ -143,6 +151,7 @@ local MARKERS_CONTROL_2D_NAME = 'LibImplex_2DMarkers'
 
 local UI_WIDTH, UI_HEIGHT = GuiRoot:GetDimensions()
 UI_HEIGHT = -UI_HEIGHT
+-- UI_HEIGHT_K = UI_HEIGHT / getK()
 
 local cX, cY, cZ = 0, 0, 0
 local rX, rY, rZ = 0, 0, 0
@@ -170,7 +179,11 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
 
         -- --------------------------------------------------------------------
 
-        local distance = distance3D(x, y, z, pX, pY, pZ)
+        -- local distance = distance3D(x, y, z, pX, pY, pZ)
+        local diffX = pX - x
+        local diffY = pY - y
+        local diffZ = pZ - z
+        local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
         for i = 1, #updateFunctions do
             updateFunctions[i](marker, distance, {pX, pY, pZ})
@@ -200,19 +213,22 @@ end
 
 local MarkerPOI = class(Marker)
 
-function MarkerPOI:__init(position, texture, size, color, minDistance, maxDistance, minAlpha, maxAlpha)
+function MarkerPOI:__init(position, texture, size, color, minDistance, maxDistance, minAlpha, maxAlpha, ...)
     assert(minDistance ~= maxDistance, 'Min and max distance must be different!')
 
     local distanceSection = maxDistance - minDistance
     local alphaSection = maxAlpha - minAlpha
 
-    local x, y, z = position[1], position[2], position[3]
+    -- local x, y, z = position[1], position[2], position[3]
     -- local b1, b2, b3, b4 = x + maxDistance * 100, x - maxDistance * 100, z + maxDistance * 100, z - maxDistance * 100
 
     local maxDistanceSq = maxDistance * maxDistance * 10000
     local minDistanceSq = minDistance * minDistance * 10000
 
+    local updateFunctions = {...}
+
     local function update(marker)
+        local x, y, z = position[1], position[2], position[3]
         local markerControl = marker.control
 
         -- for the future
@@ -264,10 +280,19 @@ function MarkerPOI:__init(position, texture, size, color, minDistance, maxDistan
         local scaleW = UI_WIDTH / w
         local scaleH = UI_HEIGHT / h
 
+        -- another interesting way to do the same, a bit faster, but with limitations
+        -- local scale = UI_HEIGHT_K / Z
+
         markerControl:SetAnchor(CENTER, GuiRoot, CENTER, X * scaleW, Y * scaleH)
 
         markerControl:SetDrawLevel(-Z)
         marker.distanceLabel:SetDrawLevel(-Z)
+
+        if #updateFunctions > 0 then
+            for i = 1, #updateFunctions do
+                updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
+            end
+        end
     end
 
     self.base.__init(self, position, nil, texture, size, color, update)
@@ -284,6 +309,7 @@ function Marker2D.UpdateVectors()
     fX, fY, fZ = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
     rX, rY, rZ = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
     uX, uY, uZ = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
+    -- TODO: normalize?
 
     _, pX, pY, pZ = GetUnitRawWorldPosition('player')
 end
@@ -300,7 +326,11 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
         local markerControl = self.control
         local x, y, z = self.position[1], self.position[2], self.position[3]
 
-        local distance = distance3D(x, y, z, pX, pY, pZ)
+        -- local distance = distance3D(x, y, z, pX, pY, pZ)
+        local diffX = pX - x
+        local diffY = pY - y
+        local diffZ = pZ - z
+        local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
         for i = 1, #updateFunctions do
             updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
@@ -313,9 +343,7 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
         markerControl:SetDrawLevel(-Z)
     end
 
-    local needUpdates = #updateFunctions > 0
-
-    self.base.__init(self, position, orientation, texture, size, color, needUpdates and update or nil)
+    self.base.__init(self, position, orientation, texture, size, color, update)
 
     local control = self.control
 
