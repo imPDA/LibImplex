@@ -1,4 +1,4 @@
-local Log = LibImplex_Logger('LibImplexLogger')
+local Log = LibImplex_Logger('LibImplex')
 
 -- ----------------------------------------------------------------------------
 
