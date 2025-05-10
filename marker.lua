@@ -187,6 +187,8 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
         local scaleH = UI_HEIGHT / h
 
         markerControl:SetAnchor(CENTER, GuiRoot, CENTER, X * scaleW, Y * scaleH)
+
+        markerControl:SetDrawLevel(-Z)
     end
 
     self.base.__init(self, position, orientation, texture, size, color, update)
@@ -263,6 +265,9 @@ function MarkerPOI:__init(position, texture, size, color, minDistance, maxDistan
         local scaleH = UI_HEIGHT / h
 
         markerControl:SetAnchor(CENTER, GuiRoot, CENTER, X * scaleW, Y * scaleH)
+
+        markerControl:SetDrawLevel(-Z)
+        marker.distanceLabel:SetDrawLevel(-Z)
     end
 
     self.base.__init(self, position, nil, texture, size, color, update)
@@ -301,6 +306,11 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
             updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
             if markerControl:IsHidden() then return end
         end
+
+        local dX, dY, dZ = x - cX, y - cY, z - cZ
+        local Z = fX * dX + fY * dY + fZ * dZ
+
+        markerControl:SetDrawLevel(-Z)
     end
 
     local needUpdates = #updateFunctions > 0

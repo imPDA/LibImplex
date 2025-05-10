@@ -61,7 +61,7 @@
         </TopLevelControl> -->
 
         
-        <Label name="LibImplex_DistanceLabelTemplate" font="ZoFontWinH2" text="-" virtual="true">
+        <Label name="LibImplex_DistanceLabelTemplate" tier="DT_LOW" layer="DL_BACKGROUND" font="ZoFontWinH2" text="-" virtual="true">
             <Anchor point="TOP" relativePoint="BOTTOM" offsetY="-8" />
         </Label>
 
