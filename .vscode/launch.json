@@ -1,30 +1,30 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "type": "lua-local",
-        "request": "launch",
-        "name": "Debug",
-        "program": {
-          "command": "C:/lua/esolua.exe"
-        },
-        "args": [
-          "-s", "D:/eso_addon_development/esoui/esoui",
-          "\"${file}\"",
-          "debug",
-        ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lua-local",
+      "request": "launch",
+      "name": "Debug",
+      "program": {
+        "command": "C:/lua/esolua.exe"
       },
-      {
-        "type": "lua-local",
-        "request": "launch",
-        "name": "Release",
-        "program": {
-          "command": "C:/lua/esolua.exe"
-        },
-        "args": [
-          "-s", "D:/eso_addon_development/esoui/esoui",
-          "\"${file}\"",
-        ]
-      }
-    ]
-  }
+      "args": [
+        "-s", "D:/eso_addon_development/esoui/esoui",
+        "\"${file}\"",
+        "debug",
+      ]
+    },
+    {
+      "type": "lua-local",
+      "request": "launch",
+      "name": "Release",
+      "program": {
+        "command": "C:/lua/esolua.exe"
+      },
+      "args": [
+        "-s", "D:/eso_addon_development/esoui/esoui",
+        "\"${file}\"",
+      ]
+    }
+  ]
+}

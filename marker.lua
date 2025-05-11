@@ -211,97 +211,6 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
     if size then control:SetDimensions(unpack(size)) end
 end
 
-local MarkerPOI = class(Marker)
-
-function MarkerPOI:__init(position, texture, size, color, minDistance, maxDistance, minAlpha, maxAlpha, ...)
-    assert(minDistance ~= maxDistance, 'Min and max distance must be different!')
-
-    local distanceSection = maxDistance - minDistance
-    local alphaSection = maxAlpha - minAlpha
-
-    -- local x, y, z = position[1], position[2], position[3]
-    -- local b1, b2, b3, b4 = x + maxDistance * 100, x - maxDistance * 100, z + maxDistance * 100, z - maxDistance * 100
-
-    local maxDistanceSq = maxDistance * maxDistance * 10000
-    local minDistanceSq = minDistance * minDistance * 10000
-
-    local updateFunctions = {...}
-
-    local function update(marker)
-        local x, y, z = position[1], position[2], position[3]
-        local markerControl = marker.control
-
-        -- for the future
-        -- if pX > b1 or pX < b2 or pZ > b3 or pZ < b4 then
-        --     markerControl:SetHidden(true)
-        --     return
-        -- end
-
-        -- --------------------------------------------------------------------
-
-        local diffX = pX - x
-        local diffY = pY - y
-        local diffZ = pZ - z
-
-        local distanceSq = diffX * diffX + diffY * diffY + diffZ * diffZ
-
-        if distanceSq > maxDistanceSq or distanceSq < minDistanceSq then
-            markerControl:SetHidden(true)
-            return
-        end
-
-        local distance = sqrt(distanceSq) * 0.01
-
-        local dX, dY, dZ = x - cX, y - cY, z - cZ
-        local Z = fX * dX + fY * dY + fZ * dZ
-
-        if Z < 0 then
-            markerControl:SetHidden(true)
-            return
-        end
-
-        markerControl:SetHidden(false)
-
-        local percent = (distance - minDistance) / distanceSection
-        markerControl:SetAlpha(minAlpha + percent * alphaSection)
-
-        if distance > 1000 then
-            marker.distanceLabel:SetText(string.format('%.1fkm', distance * 0.001))
-        else
-            marker.distanceLabel:SetText(string.format('%dm', distance))
-        end
-
-        -- --------------------------------------------------------------------
-
-        local X = rX * dX + rZ * dZ
-        local Y = uX * dX + uY * dY + uZ * dZ
-
-        local w, h = GetWorldDimensionsOfViewFrustumAtDepth(Z)
-        local scaleW = UI_WIDTH / w
-        local scaleH = UI_HEIGHT / h
-
-        -- another interesting way to do the same, a bit faster, but with limitations
-        -- local scale = UI_HEIGHT_K / Z
-
-        markerControl:SetAnchor(CENTER, GuiRoot, CENTER, X * scaleW, Y * scaleH)
-
-        markerControl:SetDrawLevel(-Z)
-        marker.distanceLabel:SetDrawLevel(-Z)
-
-        if #updateFunctions > 0 then
-            for i = 1, #updateFunctions do
-                updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
-            end
-        end
-    end
-
-    self.base.__init(self, position, nil, texture, size, color, update)
-
-    local control = self.control
-
-    if size then control:SetDimensions(unpack(size)) end
-end
-
 function Marker2D.UpdateVectors()
     Set3DRenderSpaceToCurrentCamera(MARKERS_CONTROL_2D_NAME)
 
@@ -408,9 +317,9 @@ end
 LibImplex = LibImplex or {}
 
 LibImplex.Marker = {
+    subclass = function() return class(Marker) end,
     Marker2D = Marker2D,
     Marker3D = Marker3D,
-    POI = MarkerPOI,
 }
 
 -- LibImplex.Player = {
