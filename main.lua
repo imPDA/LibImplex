@@ -1,4 +1,5 @@
-local Log = LibImplex_Logger('LibImplex')
+local Log = LibImplex_Logger()
+local TEST_ENVIRONMENT = false
 
 -- ----------------------------------------------------------------------------
 
@@ -6,7 +7,7 @@ local lib = {}
 
 lib.name = 'LibImplex'
 lib.displayName = 'LibImplex'
-lib.version = '0.0.1'
+lib.version = '0.0.2'
 
 local EVENT_NAMESPACE = 'LIBIMPLEX_EVEN_NAMESPACE'
 local EVENT_BEFORE_UPDATE = 1
@@ -48,18 +49,18 @@ function lib:OnPlayerActivated(initial)
 	local updateArray = {}
 	local counter = 0
 
-	local function updateMarkers()
+	local function updateMarkersTest()
 		local start = GetGameTimeMilliseconds()
 
 		for _ = 1, N do
-			lib:FireCallbacks(EVENT_BEFORE_UPDATE)
+			self:FireCallbacks(EVENT_BEFORE_UPDATE)
 			updateVectors()
 
 			for _, obj in pairs(pool:GetActiveObjects()) do
 				obj.m_Marker:Update()
 			end
 
-			lib:FireCallbacks(EVENT_AFTER_UPDATE)
+			self:FireCallbacks(EVENT_AFTER_UPDATE)
 		end
 
 		local finish = GetGameTimeMilliseconds()
@@ -72,6 +73,19 @@ function lib:OnPlayerActivated(initial)
 			counter = 0
 		end
 	end
+
+	local function updateMarkersRegular()
+		self:FireCallbacks(EVENT_BEFORE_UPDATE)
+		updateVectors()
+
+		for _, obj in pairs(pool:GetActiveObjects()) do
+			obj.m_Marker:Update()
+		end
+
+		self:FireCallbacks(EVENT_AFTER_UPDATE)
+	end
+
+	local updateMarkers = TEST_ENVIRONMENT and updateMarkersTest or updateMarkersRegular
 
 	EVENT_MANAGER:RegisterForUpdate(EVENT_NAMESPACE, 0, updateMarkers)
 end
@@ -95,7 +109,9 @@ function lib:FireCallbacks(event)
 end
 
 function lib:OnLoad()
-	SLASH_COMMANDS['/r'] = SLASH_COMMANDS['/reloadui']
+	if TEST_ENVIRONMENT then
+		SLASH_COMMANDS['/r'] = SLASH_COMMANDS['/reloadui']
+	end
 
 	EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_PLAYER_ACTIVATED, function(_, initial) self:OnPlayerActivated(initial) end)
 end

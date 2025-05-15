@@ -2,6 +2,8 @@
 
 local PI = math.pi
 
+local Vector = LibImplex.Vector
+
 local TEXTURES = LibImplex.Textures.Numbers
 local ZONE_ID = 1011
 
@@ -18,20 +20,26 @@ local MARKER_POSITIONS = {
     --[[9]] {163853, 18355, 333657},
 }
 
-local ORIENTATION = {-PI * 0.5, -PI * 0.36, 0, true}
+local TEXT_POSITION = Vector({164664, 18740, 336661})
+
+local COLOR = {173 / 255, 216 / 255, 230 / 255}  -- #add8e6
 
 local function placeMarkers()
     if GetZoneId(GetUnitZoneIndex('player')) ~= ZONE_ID then return end
 
+    local ORIENTATION = {-PI * 0.5, -PI * 0.36, 0, true}
     for i = 1, #MARKER_POSITIONS do
         LibImplex.Marker.Marker3D(
             MARKER_POSITIONS[i],
             ORIENTATION,
             TEXTURES[i-1],
             {1.5, 1.5},  -- size (x1.5)
-            {173 / 255, 216 / 255, 230 / 255}  -- color, #add8e6
+            COLOR
         )
     end
+
+    local someText = LibImplex.String('lorem ipsum')
+    someText:Render(TEXT_POSITION, {0, 0.938 * PI, 0, true}, 1, COLOR)
 end
 
 do

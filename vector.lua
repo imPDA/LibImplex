@@ -1,4 +1,6 @@
 local sqrt = math.sqrt
+local sin = math.sin
+local cos = math.cos
 
 local mt = {
     __call = function(cls, obj)
@@ -84,6 +86,45 @@ Vector.__mul = Vector.multiply
 
 -- ----------------------------------------------------------------------------
 
+local function FromEuler(yaw, pitch, roll)
+    local cy = cos(yaw * 0.5)
+    local sy = sin(yaw * 0.5)
+    local cp = cos(pitch * 0.5)
+    local sp = sin(pitch * 0.5)
+    local cr = cos(roll * 0.5)
+    local sr = sin(roll * 0.5)
+
+    return {
+        --[[w]] cr * cp * cy + sr * sp * sy,
+        --[[i]] sr * cp * cy - cr * sp * sy,
+        --[[j]] cr * sp * cy + sr * cp * sy,
+        --[[k]] cr * cp * sy - sr * sp * cy,
+    }
+end
+
+local function RotateVectorByQuaternion(v, q)
+    local s = q[1]
+    local u = Vector({q[2], q[3], q[4]})
+
+    local dot = u:dot(v)
+    local cross = u:cross(v)
+
+    local a = s * s - (u[1] * u[1] + u[2] * u[2] + u[3] * u[3])
+
+    return Vector({
+        v[1] * a + 2 * (dot * u[1] + s * cross[1]),
+        v[2] * a + 2 * (dot * u[2] + s * cross[2]),
+        v[3] * a + 2 * (dot * u[3] + s * cross[3])
+    })
+end
+
+-- ----------------------------------------------------------------------------
+
 LibImplex = LibImplex or {}
 
 LibImplex.Vector = Vector
+
+LibImplex.Q = {
+    FromEuler = FromEuler,
+    RotateVectorByQuaternion = RotateVectorByQuaternion,
+}

@@ -2,12 +2,13 @@
 ## Author: imPDA
 ## Description: Simple (hope so) marker "engine"
 ## APIVersion: 101045
-## AddOnVersion: 1
+## AddOnVersion: 2
 ## IsLibrary: true
-## OptionalDependsOn: LibDebugLogger Lib3D
-; ## SavedVariables: 
+## OptionalDependsOn: LibDebugLogger>=263
 
 logger.lua
+
+class.lua
 
 controls.xml
 marker.lua
@@ -17,6 +18,4 @@ main.lua
 
 textures.lua
 
-examples/vvardenfell.lua
-; examples/uniticon.lua
-examples/groundmarkers.lua
+; examples/groundmarkers.lua

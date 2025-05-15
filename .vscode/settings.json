@@ -5,6 +5,7 @@
         "ZO_CreateStringId",
         "Pathfinder_Feedback",
         "LibImplex_2DMarkers",
-        "GuiRoot"
+        "GuiRoot",
+        "EVENT_MANAGER"
     ]
 }

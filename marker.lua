@@ -28,38 +28,6 @@ local MARKER_TEMPLATE_NAME = 'LibImplex_MarkerTemplate'
 
 -- ----------------------------------------------------------------------------
 
-local function class(base)
-	local cls = {}
-
-	if type(base) == 'table' then
-		for k, v in pairs(base) do
-			cls[k] = v
-		end
-
-		cls.base = base
-	end
-
-	cls.__index = cls
-
-	setmetatable(cls, {
-        __call = function(self, ...)
-            local obj = setmetatable({}, cls)
-
-            if self.__init then
-                self.__init(obj, ...)
-            elseif base ~= nil and base.__init ~= nil then
-                base.__init(obj, ...)
-            end
-
-            return obj
-        end
-	})
-
-	return cls
-end
-
--- ----------------------------------------------------------------------------
-
 local function GetPool()
     if not MarkersPool then
         local function factoryFunction(objectPool)
@@ -92,7 +60,7 @@ end
 --- @field control ZO_Object Control
 --- @field updateFunction function|nil Update function
 --- @field base Marker Base class
-local Marker = class()
+local Marker = LibImplex.class()
 
 --- Constructor for Marker
 --- @param position table|Vector X Y Z
@@ -138,20 +106,21 @@ function Marker:DistanceXZ(point)
 end
 
 function Marker:Delete()
+    self.control.m_Marker = nil
     GetPool():ReleaseObject(self.objectKey)
 end
 
 -- ----------------------------------------------------------------------------
 
 --- @class Marker2D : Marker
-local Marker2D = class(Marker)
+local Marker2D = LibImplex.class(Marker)
 
 local MARKERS_CONTROL_2D = LibImplex_2DMarkers
 local MARKERS_CONTROL_2D_NAME = 'LibImplex_2DMarkers'
 
 local UI_WIDTH, UI_HEIGHT = GuiRoot:GetDimensions()
-UI_HEIGHT = -UI_HEIGHT
--- UI_HEIGHT_K = UI_HEIGHT / getK()
+local NEGATIVE_UI_HEIGHT = -UI_HEIGHT
+-- UI_HEIGHT_K = NEGATIVE_UI_HEIGHT / getK()
 
 local cX, cY, cZ = 0, 0, 0
 local rX, rY, rZ = 0, 0, 0
@@ -175,8 +144,6 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
             return
         end
 
-        markerControl:SetHidden(false)  -- TODO: optimizable?
-
         -- --------------------------------------------------------------------
 
         -- local distance = distance3D(x, y, z, pX, pY, pZ)
@@ -186,8 +153,7 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
         local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
         for i = 1, #updateFunctions do
-            updateFunctions[i](marker, distance, {pX, pY, pZ})
-            if markerControl:IsHidden() then return end
+            if updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
         end
 
         -- --------------------------------------------------------------------
@@ -197,11 +163,12 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
 
         local w, h = GetWorldDimensionsOfViewFrustumAtDepth(Z)
         local scaleW = UI_WIDTH / w
-        local scaleH = UI_HEIGHT / h
+        local scaleH = NEGATIVE_UI_HEIGHT / h
 
         markerControl:SetAnchor(CENTER, GuiRoot, CENTER, X * scaleW, Y * scaleH)
 
         markerControl:SetDrawLevel(-Z)
+        markerControl:SetHidden(false)
     end
 
     self.base.__init(self, position, orientation, texture, size, color, update)
@@ -226,7 +193,7 @@ end
 -- ----------------------------------------------------------------------------
 
 --- @class Marker3D : Marker
-local Marker3D = class(Marker)
+local Marker3D = LibImplex.class(Marker)
 
 function Marker3D:__init(position, orientation, texture, size, color, ...)
     local updateFunctions = {...}
@@ -242,8 +209,7 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
         local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
         for i = 1, #updateFunctions do
-            updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
-            if markerControl:IsHidden() then return end
+            if updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
         end
 
         local dX, dY, dZ = x - cX, y - cY, z - cZ
@@ -317,7 +283,7 @@ end
 LibImplex = LibImplex or {}
 
 LibImplex.Marker = {
-    subclass = function() return class(Marker) end,
+    subclass = function() return LibImplex.class(Marker) end,
     Marker2D = Marker2D,
     Marker3D = Marker3D,
 }
