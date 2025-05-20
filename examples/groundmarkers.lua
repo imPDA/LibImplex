@@ -40,6 +40,24 @@ local function placeMarkers()
 
     local someText = LibImplex.String('lorem ipsum')
     someText:Render(TEXT_POSITION, {0, 0.938 * PI, 0, true}, 1, COLOR)
+
+    --[[
+    local USE_BUFFER = true
+
+	local M1 = {162864, 18500, 333339}
+	local M2 = {162550, 18500, 332985}
+	local M3 = {162180, 18500, 332560}
+
+    LibImplex.Marker.Marker3D(M1, {0, 0, 0, USE_BUFFER}, TEXTURES[1], {3, 3}, COLOR)
+    LibImplex.Marker.Marker3D(M2, {0, 0, 0, USE_BUFFER}, TEXTURES[2], {3, 3}, COLOR)
+    LibImplex.Marker.Marker3D(M3, {0, 0, 0, USE_BUFFER}, TEXTURES[3], {3, 3}, COLOR)
+    --]]
+
+    local bank = LibImplex.String('bank')
+    bank:Render({162260, 18608, 330059}, {-0.5 * PI, -0.15 * PI, 0, true}, 1, COLOR)
+
+    local respec = LibImplex.String('respec')
+    respec:Render({159998, 18420, 331774}, {-0.5 * PI, 0.44 * PI, 0, true}, 1, COLOR)
 end
 
 do

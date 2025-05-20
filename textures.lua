@@ -72,7 +72,8 @@ function String:Render(position, orientation, size, color)
 
     local lastPlacedObject = nil
     local TEXTURE = LibImplex.Textures.Alphabet.texture
-    local DIRECTION = LibImplex.Q.RotateVectorByQuaternion(LibImplex.Vector({1, 0, 0}), LibImplex.Q.FromEuler(0, 0.938 * PI, 0))
+    local Q = LibImplex.Q.FromEuler(orientation[3], orientation[2], orientation[1])
+    local DIRECTION
 
     for i = 1, #self.text do
         local character = sub(self.text, i, i)
@@ -80,6 +81,7 @@ function String:Render(position, orientation, size, color)
         local w, h = LibImplex.Textures.Alphabet.GetSizeCoefficients(character, size)
 
         if lastPlacedObject then
+            DIRECTION = LibImplex.Q.RotateVectorByQuaternion({lastPlacedObject.control:Get3DRenderSpaceRight()}, Q)
             pos = lastPlacedObject.position + DIRECTION * (lastPlacedObject.width + w) * 50
         end
 

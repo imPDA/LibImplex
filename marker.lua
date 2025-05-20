@@ -4,7 +4,8 @@ local WorldPositionToGuiRender3DPosition = WorldPositionToGuiRender3DPosition
 local GuiRender3DPositionToWorldPosition = GuiRender3DPositionToWorldPosition
 local GetWorldDimensionsOfViewFrustumAtDepth = GetWorldDimensionsOfViewFrustumAtDepth
 local Set3DRenderSpaceToCurrentCamera = Set3DRenderSpaceToCurrentCamera
-local GetUnitRawWorldPosition = GetUnitWorldPosition
+local GetUnitWorldPosition = GetUnitWorldPosition
+local GetUnitRawWorldPosition = GetUnitRawWorldPosition
 
 local lerp = zo_lerp
 local clampedPercentBetween = zo_clampedPercentBetween
@@ -181,7 +182,7 @@ end
 function Marker2D.UpdateVectors()
     Set3DRenderSpaceToCurrentCamera(MARKERS_CONTROL_2D_NAME)
 
-    cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())
+    cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())  -- RawWorldPosition!
     fX, fY, fZ = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
     rX, rY, rZ = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
     uX, uY, uZ = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
