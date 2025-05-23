@@ -2,7 +2,7 @@
 ## Author: imPDA
 ## Description: Simple (hope so) marker "engine"
 ## APIVersion: 101045
-## AddOnVersion: 3
+## AddOnVersion: 4
 ## IsLibrary: true
 ## OptionalDependsOn: LibDebugLogger>=263 Lib3D>=312
 
