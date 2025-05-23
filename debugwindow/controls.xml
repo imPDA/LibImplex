@@ -1,0 +1,13 @@
+<GuiXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sir.insidi.at/or/schema/esoui.xsd">
+	<Controls>
+        <TopLevelControl name="LibImplex_DebugWindow" mouseEnabled="true" movable="true" hidden="true">
+            <Dimensions x="600" y="400" />
+            <Anchor point="TOPLEFT" />
+            <Controls>
+                <Label name="$(parent)Text" font="ZoFontWinH4" wrapMode="ELLIPSIS" verticalAlignment="CENTER" text="-">
+                    <AnchorFill />
+                </Label>
+            </Controls>
+        </TopLevelControl>
+	</Controls>
+</GuiXml>

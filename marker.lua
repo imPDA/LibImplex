@@ -74,7 +74,7 @@ function Marker:__init(position, orientation, texture, size, color, updateFuncti
     self.position = position
     self.orientation = orientation
 
-    self.updateFunction = updateFunction
+    self.Update = updateFunction
 
     local control, objectKey = GetPool():AcquireObject()
     self.objectKey = objectKey
@@ -86,9 +86,9 @@ function Marker:__init(position, orientation, texture, size, color, updateFuncti
     self.control = control
 end
 
-function Marker:Update(...)
-    self:updateFunction(...)
-end
+-- function Marker:Update(...)
+--     self:updateFunction(...)
+-- end
 
 --[[
 --- Get distance to point
@@ -127,11 +127,10 @@ local cX, cY, cZ = 0, 0, 0
 local rX, rY, rZ = 0, 0, 0
 local uX, uY, uZ = 0, 0, 0
 local fX, fY, fZ = 0, 0, 0
-local pX, pY, pZ = 0, 0, 0
+local pwX, pwY, pwZ = 0, 0, 0
+local prwX, prwY, prwZ = 0, 0, 0
 
 function Marker2D:__init(position, orientation, texture, size, color, ...)
-    local updateFunctions = {...}
-
     local function update(marker)
         local markerControl = marker.control
         local x, y, z = self.position[1], self.position[2], self.position[3]
@@ -148,13 +147,14 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
         -- --------------------------------------------------------------------
 
         -- local distance = distance3D(x, y, z, pX, pY, pZ)
-        local diffX = pX - x
-        local diffY = pY - y
-        local diffZ = pZ - z
+        local diffX = prwX - x
+        local diffY = prwY - y
+        local diffZ = prwZ - z
         local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
+        local updateFunctions = marker.updateFunctions
         for i = 1, #updateFunctions do
-            if updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
+            if updateFunctions[i](marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
         end
 
         -- --------------------------------------------------------------------
@@ -173,6 +173,7 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
     end
 
     self.base.__init(self, position, orientation, texture, size, color, update)
+    self.updateFunctions = {...}
 
     local control = self.control
 
@@ -182,13 +183,14 @@ end
 function Marker2D.UpdateVectors()
     Set3DRenderSpaceToCurrentCamera(MARKERS_CONTROL_2D_NAME)
 
-    cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())  -- RawWorldPosition!
+    cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())
     fX, fY, fZ = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
     rX, rY, rZ = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
     uX, uY, uZ = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
     -- TODO: normalize?
 
-    _, pX, pY, pZ = GetUnitRawWorldPosition('player')
+    _, pwX, pwY, pwZ = GetUnitWorldPosition('player')
+    _, prwX, prwY, prwZ = GetUnitRawWorldPosition('player')
 end
 
 -- ----------------------------------------------------------------------------
@@ -204,13 +206,13 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
         local x, y, z = self.position[1], self.position[2], self.position[3]
 
         -- local distance = distance3D(x, y, z, pX, pY, pZ)
-        local diffX = pX - x
-        local diffY = pY - y
-        local diffZ = pZ - z
+        local diffX = prwX - x
+        local diffY = prwY - y
+        local diffZ = prwZ - z
         local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
         for i = 1, #updateFunctions do
-            if updateFunctions[i](marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
+            if updateFunctions[i](marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
         end
 
         local dX, dY, dZ = x - cX, y - cY, z - cZ
@@ -303,6 +305,7 @@ LibImplex.Pool = {
 LibImplex.GetVectorForward = function() return {fX, fY, fZ} end
 LibImplex.GetVectorRight = function() return {rX, rY, rZ} end
 LibImplex.GetVectorUp = function() return {uX, uY, uZ} end
+LibImplex.GetCameraPosition = function() return cX, cY, cZ end
 
 local function calculateEulerAngles()
     local pitch = math.asin(-fY)

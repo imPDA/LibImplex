@@ -7,7 +7,7 @@ local lib = {}
 
 lib.name = 'LibImplex'
 lib.displayName = 'LibImplex'
-lib.version = '0.0.2'
+lib.version = '0.0.3'
 
 local EVENT_NAMESPACE = 'LIBIMPLEX_EVEN_NAMESPACE'
 local EVENT_BEFORE_UPDATE = 1
@@ -111,6 +111,7 @@ end
 function lib:OnLoad()
 	if TEST_ENVIRONMENT then
 		SLASH_COMMANDS['/r'] = SLASH_COMMANDS['/reloadui']
+		LibImplex_ShowDebugWindow()
 	end
 
 	EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_PLAYER_ACTIVATED, function(_, initial) self:OnPlayerActivated(initial) end)

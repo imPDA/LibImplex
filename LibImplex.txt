@@ -2,9 +2,9 @@
 ## Author: imPDA
 ## Description: Simple (hope so) marker "engine"
 ## APIVersion: 101045
-## AddOnVersion: 2
+## AddOnVersion: 3
 ## IsLibrary: true
-## OptionalDependsOn: LibDebugLogger>=263
+## OptionalDependsOn: LibDebugLogger>=263 Lib3D>=312
 
 logger.lua
 
@@ -13,6 +13,9 @@ class.lua
 controls.xml
 marker.lua
 vector.lua
+
+debugwindow/controls.xml
+debugwindow/main.lua
 
 main.lua
 
