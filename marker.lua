@@ -1,4 +1,4 @@
-local Log = LibImplex_Logger()
+-- local Log = LibImplex_Logger()
 
 local WorldPositionToGuiRender3DPosition = WorldPositionToGuiRender3DPosition
 local GuiRender3DPositionToWorldPosition = GuiRender3DPositionToWorldPosition
@@ -23,6 +23,7 @@ local floor = math.floor
 -- ----------------------------------------------------------------------------
 
 local MarkersPool
+local StaticMarkersPool
 
 local POOL_CONTROL = LibImplex_MarkersControl
 local MARKER_TEMPLATE_NAME = 'LibImplex_MarkerTemplate'
@@ -53,6 +54,30 @@ local function GetPool()
     return MarkersPool
 end
 
+local function GetStaticPool()
+    if not StaticMarkersPool then
+        local function factoryFunction(objectPool)
+            local marker = ZO_ObjectPool_CreateNamedControl('$(parent)_StaticMarker', MARKER_TEMPLATE_NAME, objectPool, POOL_CONTROL)
+            assert(marker ~= nil, 'Marker was not created')
+
+            return marker
+        end
+
+        local function resetFunction(control)
+            for i = 1, control:GetNumChildren() do
+                local childControl = control:GetChild(i)
+                childControl:SetHidden(true)
+            end
+
+            control:SetHidden(true)
+        end
+
+        StaticMarkersPool = ZO_ObjectPool:New(factoryFunction, resetFunction)
+    end
+
+    return StaticMarkersPool
+end
+
 -- ----------------------------------------------------------------------------
 
 --- @class Marker
@@ -74,9 +99,15 @@ function Marker:__init(position, orientation, texture, size, color, updateFuncti
     self.position = position
     self.orientation = orientation
 
-    self.Update = updateFunction
+    if updateFunction then
+        self.Update = updateFunction
+        self.pool = GetPool()
+    else
+        self.pool = GetStaticPool()
+    end
 
-    local control, objectKey = GetPool():AcquireObject()
+    local control, objectKey = self.pool:AcquireObject()
+
     self.objectKey = objectKey
     control.m_Marker = self
 
@@ -108,7 +139,9 @@ end
 
 function Marker:Delete()
     self.control.m_Marker = nil
-    GetPool():ReleaseObject(self.objectKey)
+    self.pool:ReleaseObject(self.objectKey)
+    self.pool = nil
+    self.Update = nil
 end
 
 -- ----------------------------------------------------------------------------
@@ -245,6 +278,34 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
     control:SetHidden(false)
 end
 
+--- @class MarkerStatic3D : Marker
+local Marker3DStatic = LibImplex.class(Marker)
+
+function Marker3DStatic:__init(position, orientation, texture, size, color)
+    self.base.__init(self, position, orientation, texture, size, color)  -- TODO: refactor
+
+    local control = self.control
+
+    size = size or {1, 1}
+
+    control:Create3DRenderSpace()
+    control:Set3DLocalDimensions(unpack(size))
+
+    local pitch, yaw, roll, depthBuffer = unpack(orientation)
+    pitch = pitch or 0
+    yaw = yaw or 0
+    roll = roll or 0
+
+    -- worlds coordinates to render coordinates
+    local rendX, rendY, rendZ = WorldPositionToGuiRender3DPosition(unpack(position))
+
+	control:Set3DRenderSpaceOrigin(rendX, rendY, rendZ)
+	control:Set3DRenderSpaceOrientation(pitch, yaw, roll)
+    control:Set3DRenderSpaceUsesDepthBuffer(depthBuffer)
+
+    control:SetHidden(false)
+end
+
 -- ----------------------------------------------------------------------------
 -- TODO: optimize lerp and clamp functions
 
@@ -289,6 +350,11 @@ LibImplex.Marker = {
     subclass = function() return LibImplex.class(Marker) end,
     Marker2D = Marker2D,
     Marker3D = Marker3D,
+    Marker3DStatic = Marker3DStatic,
+
+    _2D = Marker2D,
+    _3D = Marker3D,
+    _3DStatic = Marker3DStatic,
 }
 
 -- LibImplex.Player = {

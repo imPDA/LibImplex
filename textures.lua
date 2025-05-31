@@ -1,8 +1,5 @@
 local Log = LibImplex_Logger()
 
-local sub = string.sub
-local PI = math.pi
-
 local ROOT = 'LibImplex/textures'
 
 local NUMBER_TEXTURES = {
@@ -19,92 +16,110 @@ end
 
 local SCALE_FACTOR = 75
 local ALPHABET = {
-    path='LibImplex/textures/sansserif100.dds',
+    path='LibImplex/textures/sansserif100Full.dds',
     characterCoordinates = {
-        ['a'] = {  7,  55,   0, 122},
-        ['b'] = { 71, 122,   0, 122},
-        ['c'] = {129, 175,   0, 122},
-        ['d'] = {181, 231,   0, 122},
-        ['e'] = {243, 294,   0, 122},
-        ['f'] = {302, 338,   0, 122},
-        ['g'] = {338, 389,   0, 122},
-        ['h'] = {404, 452,   0, 122},
-        ['i'] = {466, 479,   0, 122},
+        ['a'] = {  5,  52,   0, 122},
+        ['b'] = { 69, 117,   0, 122},
+        ['c'] = {126, 172,   0, 122},
+        ['d'] = {179, 228,   0, 122},
+        ['e'] = {241, 291,   0, 122},
+        ['f'] = {299, 335,   0, 122},
+        ['g'] = {336, 385,   0, 122},
+        ['h'] = {402, 448,   0, 122},
+        ['i'] = {464, 475,   0, 122},
+        ['j'] = {480, 509,   0, 122},
+        ['k'] = {526, 575,   0, 122},
+        ['l'] = {584, 595,   0, 122},
+        ['m'] = {611, 692,   0, 122},
+        ['n'] = {709, 755,   0, 122},
+        ['o'] = {768, 819,   0, 122},
+        ['p'] = {832, 881,   0, 122},
+        ['q'] = {891, 940,   0, 122},
+        ['r'] = {957, 991,   0, 122},
 
-        ['j'] = {  0,  30, 122, 244},
-        ['k'] = { 45,  96, 122, 244},
-        ['l'] = {104, 115, 122, 244},
-        ['m'] = {131, 213, 122, 244},
-        ['n'] = {228, 276, 122, 244},
-        ['o'] = {287, 341, 122, 244},
-        ['p'] = {352, 403, 122, 244},
-        ['q'] = {411, 461, 122, 244},
+        ['s'] = {  5,  49, 122, 244},
+        ['t'] = { 55,  90, 122, 244},
+        ['u'] = { 99, 146, 122, 244},
+        ['v'] = {156, 211, 122, 244},
+        ['w'] = {216, 292, 122, 244},
+        ['x'] = {298, 351, 122, 244},
+        ['y'] = {357, 410, 122, 244},
+        ['A'] = {467, 533, 122, 244},
+        ['B'] = {543, 600, 122, 244},
+        ['C'] = {608, 669, 122, 244},
+        ['D'] = {682, 745, 122, 244},
+        ['E'] = {759, 808, 122, 244},
+        ['F'] = {822, 870, 122, 244},
+        ['G'] = {875, 941, 122, 244},
+        ['H'] = {957,1014, 122, 244},
 
-        ['r'] = { 11,  48, 244, 366},
-        ['s'] = { 52,  96, 244, 366},
-        ['t'] = {100, 136, 244, 366},
-        ['u'] = {144, 193, 244, 366},
-        ['v'] = {203, 257, 244, 366},
-        ['w'] = {262, 338, 244, 366},
-        ['x'] = {343, 398, 244, 366},
-        ['y'] = {403, 458, 244, 366},
-        ['z'] = {463, 509, 244, 366},
+        ['I'] = {  5,  36, 244, 366},
+        ['J'] = { 44,  79, 244, 366},
+        ['K'] = { 96, 156, 244, 366},
+        ['L'] = {165, 212, 244, 366},
+        ['M'] = {221, 287, 244, 366},
+        ['N'] = {305, 362, 244, 366},
+        ['O'] = {376, 444, 244, 366},
+        ['P'] = {459, 508, 244, 366},
+        ['Q'] = {515, 585, 244, 366},
+        ['R'] = {598, 659, 244, 366},
+        ['S'] = {665, 722, 244, 366},
+        ['T'] = {727, 789, 244, 366},
+        ['U'] = {797, 854, 244, 366},
+        ['V'] = {863, 929, 244, 366},
+        ['X'] = {933, 995, 244, 366},
 
-        [' '] = {7, 55, 366, 488},
+        ['W'] = {  4,  95, 366, 488},
+        ['Y'] = { 99, 160, 366, 488},
+        ['Z'] = {167, 224, 366, 488},
+        ['1'] = {243, 283, 366, 488},
+        ['2'] = {301, 351, 366, 488},
+        ['3'] = {366, 414, 366, 488},
+        ['4'] = {425, 481, 366, 488},
+        ['5'] = {495, 543, 366, 488},
+        ['6'] = {556, 609, 366, 488},
+        ['7'] = {621, 672, 366, 488},
+        ['8'] = {684, 736, 366, 488},
+        ['9'] = {747, 799, 366, 488},
+        ['0'] = {812, 863, 366, 488},
+        ['!'] = {884, 896, 366, 488},
+        ['@'] = {917,1001, 366, 488},
+
+        ['#'] = {  9,  73, 488, 610},
+        ['$'] = { 89, 139, 488, 610},
+        ['%'] = {153, 247, 488, 610},
+        ['^'] = {263, 327, 488, 610},
+        ['&'] = {341, 412, 488, 610},
+        ['*'] = {417, 465, 488, 610},
+        ['('] = {481, 512, 488, 610},
+        [')'] = {524, 555, 488, 610},
+        ['-'] = {570, 601, 488, 610},
+        ['_'] = {607, 672, 488, 610},
+        ['='] = {684, 742, 488, 610},
+        ['+'] = {764, 826, 488, 610},
+        ['\\']= {839, 883, 488, 610},
+        ['|'] = {899, 908, 488, 610},
+        ['/'] = {924, 968, 488, 610},
+        [' '] = {970,1018, 488, 610},
+
+        ['{'] = {  8,  55, 610, 732},
+        ['}'] = { 72, 118, 610, 732},
+        ['['] = {137, 163, 610, 732},
+        [']'] = {179, 205, 610, 732},
+        [':'] = {233, 245, 610, 732},
+        [';'] = {272, 293, 610, 732},
+        ['"'] = {314, 344, 610, 732},
+        ['\'']= {359, 372, 610, 732},
+        ['<'] = {391, 448, 610, 732},
+        ['>'] = {474, 531, 610, 732},
+        [','] = {550, 571, 610, 732},
+        ['.'] = {591, 603, 610, 732},
+        ['?'] = {622, 664, 610, 732},
+        ['~'] = {679, 743, 610, 732},
+        ['`'] = {768, 790, 610, 732},
     },
-    fullSize = 512,
+    fullSize = 1024,
 }
-
--- ----------------------------------------------------------------------------
-
-local String = LibImplex.class()
-String.__index = String
-
-function String:__init(string)
-    self.text = string:lower()
-    self.objects = {}
-end
-
-function String:Render(position, orientation, size, color)
-    self:Wipe()
-
-    local pos = LibImplex.Vector(position)
-
-    local lastPlacedObject = nil
-    local TEXTURE = LibImplex.Textures.Alphabet.texture
-    local Q = LibImplex.Q.FromEuler(orientation[3], orientation[2], orientation[1])
-    local DIRECTION
-
-    for i = 1, #self.text do
-        local character = sub(self.text, i, i)
-        Log('Placing `%s`', character)
-        local w, h = LibImplex.Textures.Alphabet.GetSizeCoefficients(character, size)
-
-        if lastPlacedObject then
-            DIRECTION = LibImplex.Q.RotateVectorByQuaternion({lastPlacedObject.control:Get3DRenderSpaceRight()}, Q)
-            pos = lastPlacedObject.position + DIRECTION * (lastPlacedObject.width + w) * 50
-        end
-
-        local object = LibImplex.Marker.Marker3D(pos, orientation, TEXTURE, {w, h}, color)
-        object.control:SetTextureCoords(LibImplex.Textures.Alphabet.GetCharacterCoordinates(character))
-        object.width = w
-        object.height = h
-
-        Log('Character placed at (%d, %d, %d)', object.position[1], object.position[2], object.position[3])
-
-        lastPlacedObject = object
-        self.objects[i] = object
-    end
-end
-
-function String:Wipe()
-    for i = 1, #self.objects do
-        self.objects[i]:Delete()
-        self.objects[i] = nil
-    end
-end
-
-String.Delete = String.Wipe
 
 -- ----------------------------------------------------------------------------
 
@@ -115,22 +130,20 @@ LibImplex.Textures.Numbers = NUMBER_TEXTURES
 
 LibImplex.Textures.Alphabet = {
     texture = ALPHABET.path,
-    GetCharacterCoordinates = function(character)
-        local l, r, t, b = unpack(ALPHABET.characterCoordinates[character])
+    GetCharacterCoordinates = function(letter)
+        local l, r, t, b = unpack(ALPHABET.characterCoordinates[letter])
         local full = ALPHABET.fullSize
 
         return l/full, r/full, t/full, b/full
     end,
-    GetSizeCoefficients = function(character, size)
-        local l, r, t, b = unpack(ALPHABET.characterCoordinates[character])
+    GetSizeCoefficients = function(letter, size)
+        local l, r, t, b = unpack(ALPHABET.characterCoordinates[letter])
 
         local w = size * (r - l) / SCALE_FACTOR
         local h = size * (b - t) / SCALE_FACTOR
 
-        Log('%s - w: %.2f, h: %2.f', character, w, h)
+        -- Log('%s - w: %.2f, h: %2.f', letter, w, h)
 
         return w, h
     end,
 }
-
-LibImplex.String = String

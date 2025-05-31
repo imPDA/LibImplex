@@ -20,5 +20,6 @@ debugwindow/main.lua
 main.lua
 
 textures.lua
+writing.lua
 
 ; examples/groundmarkers.lua
