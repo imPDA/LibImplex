@@ -23,9 +23,6 @@ function LibImplex_ShowDebugWindow()
         local rnpX, rnpZ = GetRawNormalizedWorldPosition(zoneId, prX, prY, prZ)
         text = text .. ('GetRawNormalizedWorldPosition: {%.6f, %.6f}\n'):format(rnpX, rnpZ)
 
-        local wX, wY, wZ = LibGPS3:LocalToWorld(npX, npZ)
-        text = text .. ('World (LibGPS3:LocalToWorld) x:%d, y:%d z: %d\n'):format(wX, wY, wZ)
-
         local crsoX, crsoY, crsoZ = LibImplex_2DMarkers:Get3DRenderSpaceOrigin()
         text = text .. ('Camera render space origin: {%.6f, %.6f, %.6f}\n'):format(crsoX, crsoY, crsoZ)
 

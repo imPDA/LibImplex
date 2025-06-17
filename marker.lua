@@ -211,12 +211,19 @@ function Marker2D:__init(position, orientation, texture, size, color, ...)
     local control = self.control
 
     if size then control:SetDimensions(unpack(size)) end
+
+    self.distanceLabel = control:GetNamedChild('DistanceLabel')
+end
+
+function Marker2D:Delete()
+    self.base.Delete(self)
+    self.distanceLabel:SetHidden(true)
 end
 
 function Marker2D.UpdateVectors()
     Set3DRenderSpaceToCurrentCamera(MARKERS_CONTROL_2D_NAME)
 
-    cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin())
+    cX, cY, cZ = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin()) -- RW
     fX, fY, fZ = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
     rX, rY, rZ = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
     uX, uY, uZ = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()

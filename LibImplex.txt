@@ -1,10 +1,10 @@
 ## Title: LibImplex
 ## Author: imPDA
 ## Description: Simple (hope so) marker "engine"
-## APIVersion: 101045
-## AddOnVersion: 4
+## APIVersion: 101046
+## AddOnVersion: 5
 ## IsLibrary: true
-## OptionalDependsOn: LibDebugLogger>=263 Lib3D>=312
+## OptionalDependsOn: LibDebugLogger>=268
 
 logger.lua
 
