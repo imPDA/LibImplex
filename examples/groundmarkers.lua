@@ -43,11 +43,8 @@ local function placeMarkers()
 
     local LOREM_IPSUM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sed lorem dapibus orci ultricies laoreet vel a lectus. Donec hendrerit malesuada convallis. Morbi congue elit at ipsum finibus feugiat. Morbi eget ex in massa vulputate semper quis eu sem. In pretium, ipsum eu ornare placerat, risus ante tincidunt turpis, vitae semper justo turpis nec diam. Etiam tellus eros, accumsan in vehicula vel, mollis quis ex. Donec luctus laoreet lacus in pellentesque.'
 
-    -- local someText = LibImplex.String(LOREM_IPSUM)
-    -- someText:Render(TOPLEFT, TEXT_POSITION, {0.2, 0.938 * PI, 0.1, true}, 1, COLOR)
-
-    local someText2 = LibImplex.Text(LOREM_IPSUM)
-    someText2:Render(TOPLEFT, TEXT_POSITION + LibImplex.Vector({0.5, 6000, 0}), {PI / 3, 0.938 * PI, 0, true}, 1.7, COLOR, 3500)
+    local loremIpsum = LibImplex.Text(LOREM_IPSUM, TOPLEFT, TEXT_POSITION + LibImplex.Vector({0.5, 6000, 0}), {PI / 3, 0.938 * PI, 0, true}, 1.3, COLOR, 4500)
+    loremIpsum:Render()
 
     --[[
     local USE_BUFFER = true
@@ -61,11 +58,11 @@ local function placeMarkers()
     LibImplex.Marker.Marker3D(M3, {0, 0, 0, USE_BUFFER}, TEXTURES[3], {3, 3}, COLOR)
     --]]
 
-    local bank = LibImplex.Text('Bank')
-    bank:Render(TOPLEFT, {162260, 18608, 330059}, {-0.5 * PI, -0.15 * PI, 0, true}, 1, COLOR)
+    -- local bank = LibImplex.Text('Bank')
+    -- bank:Render(TOPLEFT, {162260, 18608, 330059}, {-0.5 * PI, -0.15 * PI, 0, true}, 1, COLOR)
 
-    local respec = LibImplex.Text('Respec')
-    respec:Render(TOPLEFT, {159998, 18420, 331774}, {-0.5 * PI, 0.44 * PI, 0, true}, 1, COLOR)
+    -- local respec = LibImplex.Text('Respec')
+    -- respec:Render(TOPLEFT, {159998, 18420, 331774}, {-0.5 * PI, 0.44 * PI, 0, true}, 1, COLOR)
 end
 
 do

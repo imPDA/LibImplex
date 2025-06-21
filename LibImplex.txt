@@ -2,7 +2,7 @@
 ## Author: imPDA
 ## Description: Simple (hope so) marker "engine"
 ## APIVersion: 101046
-## AddOnVersion: 5
+## AddOnVersion: 6
 ## IsLibrary: true
 ## OptionalDependsOn: LibDebugLogger>=268
 
@@ -13,6 +13,8 @@ class.lua
 controls.xml
 marker.lua
 vector.lua
+
+; movewriting.lua
 
 debugwindow/controls.xml
 debugwindow/main.lua

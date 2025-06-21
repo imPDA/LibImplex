@@ -7,7 +7,7 @@ local lib = {}
 
 lib.name = 'LibImplex'
 lib.displayName = 'LibImplex'
-lib.version = '0.0.5'
+lib.version = '0.0.6'
 
 local EVENT_NAMESPACE = 'LIBIMPLEX_EVEN_NAMESPACE'
 local EVENT_BEFORE_UPDATE = 1
