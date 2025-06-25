@@ -1,3 +1,8 @@
+local Object = LibImplex.Marker._3DStatic
+local GetLetterSizeCoefficients = LibImplex.Textures.Alphabet.GetSizeCoefficients
+local GetLetterCoordinates = LibImplex.Textures.Alphabet.GetCharacterCoordinates
+local Q = LibImplex.Q
+
 local Text = LibImplex.class()
 Text.__index = Text
 
@@ -32,13 +37,12 @@ function Text:SplitToRows()
 
     for textPart in splittedText do
         for word in textPart:gmatch('%S+') do
-            df('word: %s', word)
             local wordLength = #word
             local wordWidth = 0
 
             for i = 1, wordLength do
                 local letter = word:sub(i, i)
-                local w, h = LibImplex.Textures.Alphabet.GetSizeCoefficients(letter, self.size)
+                local w, h = GetLetterSizeCoefficients(letter, self.size)
 
                 wordWidth = wordWidth + w * 100
             end
@@ -72,7 +76,7 @@ function Text:RenderRow(index, position)
     local row = self.rows[index][1]
     local rowLength = #row
 
-    local RIGHT = self.right
+    local RIGHT = self.R
 
     local cursor = position
 
@@ -82,12 +86,12 @@ function Text:RenderRow(index, position)
         if letter == ' ' then
             cursor = cursor + RIGHT * spaceWidth
         else
-            local w, h = LibImplex.Textures.Alphabet.GetSizeCoefficients(letter, self.size)
+            local w, h = GetLetterSizeCoefficients(letter, self.size)
 
             cursor = cursor + RIGHT * w * 50
 
-            local letterObject = LibImplex.Marker._3DStatic(cursor, self.orientation, TEXTURE, {w, h}, self.color)
-            letterObject.control:SetTextureCoords(LibImplex.Textures.Alphabet.GetCharacterCoordinates(letter))
+            local letterObject = Object(cursor, self.orientation, TEXTURE, {w, h}, self.color)
+            letterObject.control:SetTextureCoords(GetLetterCoordinates(letter))
             letterObject.control:SetDrawLevel(self.drawLevel)
             letterObject.width = w
             letterObject.height = h
@@ -111,14 +115,15 @@ local ALLOWED_ANCHOR_POINTS = {
 function Text:Render()
     self:Wipe()
 
-    local RIGHT = self.right
-    local UP = self.up
+    local RIGHT = self.R
+    local UP = self.U
 
-    local W, H = LibImplex.Textures.Alphabet.GetSizeCoefficients(self.text:sub(1, 1), self.size)
+    local W, H = GetLetterSizeCoefficients(self.text:sub(1, 1), self.size)
 
     local START_POSITION = self.position - UP * H * 50  -- + RIGHT * W * 50
 
     H = H * 100
+    self.rowHeight = H
 
     self:SplitToRows()
     for i = 1, #self.rows do
@@ -160,15 +165,11 @@ end
 function Text:Orient(orientation)
     self.orientation = orientation
 
-    local Q = LibImplex.Q.FromEuler(orientation[3], orientation[2], orientation[1])
-    local RIGHT = LibImplex.Q.RotateVectorByQuaternion({1, 0, 0}, Q)
-    local UP = LibImplex.Q.RotateVectorByQuaternion({0, 1, 0}, Q)
-    local FORWARD = LibImplex.Q.RotateVectorByQuaternion({0, 0, 1}, Q)
+    local q = Q.FromEuler(orientation[3], orientation[2], orientation[1])
 
-    self.q = Q
-    self.right = RIGHT
-    self.up = UP
-    self.f = FORWARD
+    self.R = Q.RotateVectorByQuaternion({1, 0, 0}, q)
+    self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
+    self.F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
 
     self:Rerender()
 end
@@ -201,6 +202,53 @@ function Text:Wipe()
     for i = 1, #self.objects do
         self.objects[i]:Delete()
         self.objects[i] = nil
+    end
+end
+
+function Text:GetMaxRowWidth()
+    if #self.rows < 1 then return 0 end
+
+    local maxRowWidth = math.huge
+
+    for rowIndex = 1, #self.rows do
+        local row = self.rows[rowIndex]
+
+        if row[2] < maxRowWidth then
+            maxRowWidth = row[2]
+        end
+    end
+
+    return maxRowWidth
+end
+
+function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, offsetForward)
+    local width = self:GetMaxRowWidth()
+    local height = self.rowHeight * #self.rows
+
+    if self.anchorPoint == TOP then
+        if anchorPoint == TOPRIGHT then
+            return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == R then
+            return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (-height * 0.5 + offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == BOTTOMRIGHT then
+            return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (-height + offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == TOP then
+            return self.position + self.R * (offsetRight) + self.U * (offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == CENTER then
+            return self.position + self.R * (offsetRight) + self.U * (-height * 0.5 + offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == BOTTOM then
+            return self.position + self.R * (offsetRight) + self.U * (-height + offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == TOPLEFT then
+            return self.position + self.R * (-width * 0.5 + offsetRight) + self.U * (offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == LEFT then
+            return self.position + self.R * (-width * 0.5 + offsetRight) + self.U * (-height * 0.5 + offsetUp) + self.F * (offsetForward)
+        elseif anchorPoint == BOTTOMLEFT then
+            return self.position + self.R * (-width * 0.5 + offsetRight) + self.U * (-height + offsetUp) + self.F * (offsetForward)
+        else
+            error('Wrong anchor point')
+        end
+    else
+        error('Not implemented')
     end
 end
 

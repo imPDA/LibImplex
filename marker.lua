@@ -7,6 +7,8 @@ local Set3DRenderSpaceToCurrentCamera = Set3DRenderSpaceToCurrentCamera
 local GetUnitWorldPosition = GetUnitWorldPosition
 local GetUnitRawWorldPosition = GetUnitRawWorldPosition
 
+local Q = LibImplex.Q
+
 local lerp = zo_lerp
 local clampedPercentBetween = zo_clampedPercentBetween
 local distance3D = zo_distance3D
@@ -59,6 +61,8 @@ local function GetStaticPool()
         local function factoryFunction(objectPool)
             local marker = ZO_ObjectPool_CreateNamedControl('$(parent)_StaticMarker', MARKER_TEMPLATE_NAME, objectPool, POOL_CONTROL)
             assert(marker ~= nil, 'Marker was not created')
+
+            marker:SetHidden(false)
 
             return marker
         end
@@ -285,6 +289,11 @@ function Marker3D:__init(position, orientation, texture, size, color, ...)
     control:SetHidden(false)
 end
 
+function Marker3D:Delete()
+    self.control:Destroy3DRenderSpace()
+    self.base.Delete(self)
+end
+
 --- @class MarkerStatic3D : Marker
 local Marker3DStatic = LibImplex.class(Marker)
 
@@ -307,10 +316,61 @@ function Marker3DStatic:__init(position, orientation, texture, size, color)
     local rendX, rendY, rendZ = WorldPositionToGuiRender3DPosition(unpack(position))
 
 	control:Set3DRenderSpaceOrigin(rendX, rendY, rendZ)
+
 	control:Set3DRenderSpaceOrientation(pitch, yaw, roll)
+
+    local q = Q.FromEuler(orientation[3], orientation[2], orientation[1])
+
+    self.R = Q.RotateVectorByQuaternion({1, 0, 0}, q)
+    self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
+    self.F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
+
     control:Set3DRenderSpaceUsesDepthBuffer(depthBuffer)
 
     control:SetHidden(false)
+end
+
+function Marker3DStatic:Delete()
+    -- TODO: need way to set everything to default
+    self.base.Delete(self)
+    self.control:Destroy3DRenderSpace()
+    self.control:SetDrawLevel(0)
+    self.control:SetAlpha(1)
+    self.control:SetTextureCoords(0, 1, 0, 1)
+    self.R = nil
+    self.U = nil
+    self.F = nil
+end
+
+function Marker3DStatic:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, offsetForward)
+    local R = self.R
+    local U = self.U
+    local F = self.F
+
+    local w, h = self.control:Get3DLocalDimensions()
+    local hw, hh = w * 50, h * 50
+
+    local offsetted = self.position + R * offsetRight + U * offsetUp + F * offsetForward
+
+    if anchorPoint == TOPRIGHT then
+        return offsetted + R * hw + U * hh
+    elseif anchorPoint == RIGHT then
+        return offsetted + R * hw
+    elseif anchorPoint == BOTTOMRIGHT then
+        return offsetted + R * hw - U * hh
+    elseif anchorPoint == TOP then
+        return offsetted + U * hh
+    elseif anchorPoint == CENTER then
+        return offsetted
+    elseif anchorPoint == BOTTOM then
+        return offsetted - U * hh
+    elseif anchorPoint == TOPLEFT then
+        return offsetted - R * hw + U * hh
+    elseif anchorPoint == LEFT then
+        return offsetted - R * hw
+    elseif anchorPoint == BOTTOMLEFT then
+        return offsetted - R * hw - U * hh
+    end
 end
 
 -- ----------------------------------------------------------------------------
@@ -373,6 +433,7 @@ LibImplex.Marker = {
 
 LibImplex.Pool = {
     GetPool = GetPool,
+    GetStaticPool = GetStaticPool,
 }
 
 LibImplex.GetVectorForward = function() return {fX, fY, fZ} end
