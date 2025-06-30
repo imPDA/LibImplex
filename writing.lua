@@ -228,7 +228,7 @@ function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, of
     if self.anchorPoint == TOP then
         if anchorPoint == TOPRIGHT then
             return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == R then
+        elseif anchorPoint == RIGHT then
             return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (-height * 0.5 + offsetUp) + self.F * (offsetForward)
         elseif anchorPoint == BOTTOMRIGHT then
             return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (-height + offsetUp) + self.F * (offsetForward)
