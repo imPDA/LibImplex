@@ -1,0 +1,120 @@
+[SIZE="5"][COLOR="Lime"]Complex made simple[/COLOR][/SIZE]
+
+This library allows you to create objects in space ("markers") in a very simple manner, to speed up development of other very useful addons. It can create "2D" and "3D" markers, automatically handles correct position and order of drawing (to avoid overlapping of distant markers on top of close ones). Check the description below and ImperialCartographer for more information!
+
+[SIZE="3"][COLOR="YellowGreen"]Dependencies[/COLOR][/SIZE]
+
+[spoiler]
+No external dependencies, but you can use LibDebugLogger if you are interested in logs (use "LibImplex" to filter logs)
+[LIST]
+[*][URL="https://www.esoui.com/downloads/info2275-LibDebugLogger.html"]LibDebugLogger[/URL]
+[/LIST][/spoiler]
+
+You can find a detailed description under the spoiler below (skip if you're only interested in API description).
+
+[SPOILER]
+[SIZE="3"][COLOR="YellowGreen"]It creates markers?[/COLOR][/SIZE]
+Yes, I call them "markers", but it actually creates XML controls and they can be used as you want. The most common use case so far - to place a simple marker at a particular position in space, so I use the word "marker" to describe created objects. Will probably generalize it in the future :)
+
+[SIZE="3"][COLOR="YellowGreen"]How can I use them?[/COLOR][/SIZE]
+You're probably familiar with great addons like [URL="https://www.esoui.com/downloads/info2834-OdySupportIcons-GroupRoleIconsMore.html"]OdySupportIcons[/URL] and [URL="https://www.esoui.com/downloads/info3395-ElmsMarkers.html"]Elm's Markers[/URL] - this library can help create similar looking markers with extra features. And it simplifies things a lot.
+
+[SIZE="3"][COLOR="YellowGreen"]2D and 3D markers?[/COLOR][/SIZE]
+There are two main approaches to "place" objects in space and draw them on the screen.
+[LIST=1]
+[*]Calculate vector from camera position to object position and project it on the screen, draw some texture at this point on the screen. It needs to be updated every frame (ideally, for maximum smoothing), because camera follows character and vector camera->object and view perspective changes each frame. This is how OdySupportIcons works, and some other addons use Ody's addon to draw markers (e.g. Elm's Markers). I call these markers "2D", because it's basically a flat texture on the screen at the right position.
+[*]Use built-in 3D render and related functions. I call these "3D", because game's 3D render is used (but it can't draw 3D models due to limitations, don't mix things up).
+[/LIST]
+Both methods have their own pros and cons!
+
+[SIZE="3"][COLOR="YellowGreen"]But what's the difference from Ody's addon then?[/COLOR][/SIZE]
+[LIST]
+[*]Implemented from scratch with much simpler math and additional features in mind
+[*]Two types of markers (2D and 3D) implemented for any use case you can think of
+[*]Maximum flexibility - you can add different update functions for each marker: to make them fade away, change size, etc.
+[*]Basic update functions already implemented, so you can use them right away
+[*]You can add handlers for start and end of update cycle
+[*]Created with performance in mind - it takes ~300μs to update 100 2D markers with labels (pretty heavy task), which is why I decided to make it update every frame without limit (OdySupportIcons uses 100fps limit by default), resulting in smoother experience. This can be changed in the future, as not every PC has the same computation power, but I performed tests on a laptop with Power Saving mode on, so I assumed average PC can handle this flawlessly
+[/LIST]
+[/SPOILER]
+[SIZE="3"][COLOR="YellowGreen"]API description[/COLOR][/SIZE]
+
+Creation of 2D marker:
+
+[highlight="Lua"]
+local Marker = LibImplex.Marker
+
+local position = {GetUnitWorldPosition('player')} -- some point in space, must be table {x, y, z}
+local orientation = nil -- 2D marker is flat and can't be oriented
+local texture = 'some/texture/file.dds'
+local size = {width, height} -- in pixels
+local color = {0.4, 0.5, 0.6} -- RGB
+
+local marker = Marker.Marker2D(position, orientation, texture, size, color)
+[/highlight]
+
+After color you can pass as many update functions as you wish. Update functions make changes to marker on each update (size, alpha, etc.)
+
+[highlight="Lua"]
+-- update function must have these parameters
+-- "marker" - marker itself, use it to access marker control and apply changes to control
+-- "distance" - calculated distance from player to marker, in cm
+-- "pX, pY, pZ" - x, y, z components of player vector
+-- "fX/Y/Z, rX/Y/Z, uX/Y/Z" - x, y, z components of front, right and up camera vectors, you can use them for calculations
+local function updateFunction1(marker, distance, pX, pY, pZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
+-- let's make marker disappear if it is further than 100m or 10000cm
+  marker.control:SetHidden(distance > 10000)
+end
+
+local marker = Marker.Marker2D(
+  position,
+  orientation,
+  texture,
+  size,
+  color,
+  updateFunction1,
+  -- updateFunction2,
+  -- .....
+)
+[/highlight]
+
+You can destroy marker like this:
+
+[highlight="Lua"]
+marker:Delete()
+[/highlight]
+
+All you need to do to place 3D marker - change Marker2D to Marker3D. You can use same update functions and you can destroy it via Delete as well.
+
+[highlight="Lua"]
+local Marker = LibImplex.Marker
+local PI = math.pi
+
+local position = {GetUnitWorldPosition('player')} -- some point
+local orientation = {PI, PI / 2, 0, true} -- orient as you want. Add 4th argument 'true' if you want to make 3D render use depth of view buffer
+local texture = 'some/texture/file.dds'
+local size = {width, height} -- in meters! {1, 1}, {1.5, 1.5}, etc
+local color = {0.4, 0.5, 0.6} -- RGB
+
+local marker = Marker.Marker3D(position, orientation, texture, size, color, updateFunction1)
+marker:Delete()
+[/highlight]
+
+That's it! Simple. The lib will take care of updating markers and draw order.
+
+I'm working on some other features and will describe them a bit later :)
+
+[SIZE="3"][COLOR="YellowGreen"]Thanks to[/COLOR][/SIZE]
+[LIST]
+[*][URL="https://www.esoui.com/forums/member.php?u=75946"]TheMrPancake[/URL] for implementation of Univers67 font for the "Writing" module
+[/LIST]
+
+[SIZE="3"][COLOR="YellowGreen"]Contacts[/COLOR][/SIZE]
+
+You can send me feedback via Discord (@impda) or you can join [URL="https://www.esoui.com/forums/showthread.php?t=11222"]conversation on the forum[/URL]
+
+[SIZE="3"][COLOR="YellowGreen"]Roadmap[/COLOR][/SIZE]
+[LIST]
+[*] Documentation for the "Writing" module
+[*] More fonts, different languages for the "Writing"
+[/LIST]

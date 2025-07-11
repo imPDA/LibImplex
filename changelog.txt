@@ -1,0 +1,23 @@
+V. 9
+- Drastically improved smoothness of 2D markers
+
+V. 8
+- Reupload to fix wrong attachment
+
+V. 7
+- Changed version numeration
+- Fixes for writing, 3D static markers
+- New API - GetRelativePointCoordinates (writing and 3D static markers only)
+
+0.0.6
+- "Writing" module
+
+0.0.5
+- DistanceLabel control added
+- [WIP] New module "Writing" for handling text in 3D
+
+0.0.4
+- Minor changes
+
+0.0.2
+- Initial
