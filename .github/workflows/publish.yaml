@@ -19,7 +19,7 @@ jobs:
       run: |
         addon_name="LibImplex"
 
-        SOURCE_DIR="$(pwd)"
+        SOURCE_DIR="."
         DEST_DIR="/tmp/${addon_name}"
 
         ARCHIVE_NAME="${addon_name}${GITHUB_REF_NAME}.zip"
