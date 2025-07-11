@@ -60,6 +60,6 @@ jobs:
         api_key: ${{ secrets.ESOUI_API_KEY }}
         addon_id: '4108'
         version: ${{ github.ref_name }}
-        zip_file: ${{ steps.setup.outputs.archive_name }}
+        zip_file: /tmp/${{ steps.setup.outputs.archive_name }}
         description_file: 'description.txt'
         changelog_file: 'changelog.txt'
