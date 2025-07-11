@@ -1,3 +1,7 @@
+V. 10
+- Fixed for GitHub workflow
+- New format of manifest - started testing for consoles
+
 V. 9
 - Drastically improved smoothness of 2D markers
 
