@@ -33,7 +33,7 @@ jobs:
 
         mkdir -p "$DEST_DIR"
         rsync -av $exclude_patterns $SOURCE_DIR/ $DEST_DIR/
-        
+
         (cd /tmp && zip -r "$ARCHIVE_NAME" "$(basename "$DEST_DIR")")
 
         echo "archive_name=$ARCHIVE_NAME" >> "$GITHUB_OUTPUT"
@@ -50,7 +50,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ steps.setup.outputs.archive_name }}
+        asset_path: /tmp/${{ steps.setup.outputs.archive_name }}
         asset_name: ${{ steps.setup.outputs.archive_name }}
         asset_content_type: application/zip
 
