@@ -66,4 +66,3 @@ jobs:
         zip_file: /tmp/${{ steps.setup.outputs.archive_name }}
         description_file: 'description.txt'
         changelog_file: 'changelog.txt'
-        test: true
