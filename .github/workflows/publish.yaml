@@ -17,7 +17,7 @@ jobs:
     - name: Set up environment
       id: setup
       run: |
-        addon_name = "LibImplex"
+        addon_name="LibImplex"
 
         SOURCE_DIR="$(pwd)"
         DEST_DIR="/tmp/${addon_name}"
