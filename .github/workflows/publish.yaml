@@ -31,7 +31,9 @@ jobs:
           done < ".build-ignore"
         fi
 
+        mkdir -p "$DEST_DIR"
         rsync -av $exclude_patterns $SOURCE_DIR/ $DEST_DIR/
+        
         (cd /tmp && zip -r "$ARCHIVE_NAME" "$(basename "$DEST_DIR")")
 
         echo "archive_name=$ARCHIVE_NAME" >> "$GITHUB_OUTPUT"
