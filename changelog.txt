@@ -1,5 +1,9 @@
+V. 11
+- CENTER anchor for writing
+- All anchors for `GetRelativePointCoordinates` function
+
 V. 10
-- Fixed for GitHub workflow
+- GitHub workflow fixed
 - New format of manifest - started testing for consoles
 
 V. 9

@@ -26,9 +26,10 @@ jobs:
          
         exclude_patterns=()
         if [ -f ".build-ignore" ]; then
-          while IFS= read -r pattern; do
-            exclude_patterns+=(--exclude "$pattern")
-          done < ".build-ignore"
+            while IFS= read -r pattern || [[ -n "$pattern" ]]; do
+                [[ -z "${pattern}" || "$pattern" =~ ^[[:space:]]*$ ]] && continue
+                exclude_patterns+=(--exclude="$pattern")
+            done < ".build-ignore"
         fi
 
         mkdir -p "$DEST_DIR"

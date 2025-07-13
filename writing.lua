@@ -3,6 +3,16 @@ local GetLetterSizeCoefficients = LibImplex.Textures.Alphabet.GetSizeCoefficient
 local GetLetterCoordinates = LibImplex.Textures.Alphabet.GetCharacterCoordinates
 local Q = LibImplex.Q
 
+local TOPLEFT       = TOPLEFT
+local TOP           = TOP
+local TOPRIGHT      = TOPRIGHT
+local LEFT          = LEFT
+local CENTER        = CENTER
+local RIGHT         = RIGHT
+local BOTTOMLEFT    = BOTTOMLEFT
+local BOTTOM        = BOTTOM
+local BOTTOMRIGHT   = BOTTOMRIGHT
+
 local Text = LibImplex.class()
 Text.__index = Text
 
@@ -76,7 +86,7 @@ function Text:RenderRow(index, position)
     local row = self.rows[index][1]
     local rowLength = #row
 
-    local RIGHT = self.R
+    local r = self.R
 
     local cursor = position
 
@@ -84,11 +94,11 @@ function Text:RenderRow(index, position)
         local letter = row:sub(i, i)
 
         if letter == ' ' then
-            cursor = cursor + RIGHT * spaceWidth
+            cursor = cursor + r * spaceWidth
         else
             local w, h = GetLetterSizeCoefficients(letter, self.size)
 
-            cursor = cursor + RIGHT * w * 50
+            cursor = cursor + r * w * 50
 
             local letterObject = Object(cursor, self.orientation, TEXTURE, {w, h}, self.color)
             letterObject.control:SetTextureCoords(GetLetterCoordinates(letter))
@@ -96,10 +106,10 @@ function Text:RenderRow(index, position)
             letterObject.width = w
             letterObject.height = h
 
-            cursor = cursor + RIGHT * w * 50
+            cursor = cursor + r * w * 50
 
             if i < rowLength then
-                cursor = cursor + RIGHT * letterSpacing
+                cursor = cursor + r * letterSpacing
             end
 
             self.objects[#self.objects+1] = letterObject
@@ -110,27 +120,33 @@ end
 local ALLOWED_ANCHOR_POINTS = {
     [TOPLEFT] = true,
     [TOP] = true,
+    [CENTER] = true,
 }
 
 function Text:Render()
     self:Wipe()
 
-    local RIGHT = self.R
-    local UP = self.U
+    local r = self.R
+    local u = self.U
 
     local W, H = GetLetterSizeCoefficients(self.text:sub(1, 1), self.size)
-
-    local START_POSITION = self.position - UP * H * 50  -- + RIGHT * W * 50
 
     H = H * 100
     self.rowHeight = H
 
     self:SplitToRows()
+
+    local START_POSITION = self.position - u * H * 0.5  -- + RIGHT * W * 50
+
+    if self.anchorPoint == CENTER then
+        START_POSITION = START_POSITION + u * H * #self.rows * 0.5
+    end
+
     for i = 1, #self.rows do
         if self.anchorPoint == TOPLEFT then
-            self:RenderRow(i, START_POSITION - UP * ((i-1) * H))
-        elseif self.anchorPoint == TOP then
-            self:RenderRow(i, START_POSITION - UP * ((i-1) * H) - RIGHT * (self.rows[i][2] * 0.5))
+            self:RenderRow(i, START_POSITION - u * ((i-1) * H))
+        elseif self.anchorPoint == TOP or self.anchorPoint == CENTER then
+            self:RenderRow(i, START_POSITION - u * ((i-1) * H) - r * (self.rows[i][2] * 0.5))
         end
     end
 end
@@ -221,6 +237,7 @@ function Text:GetMaxRowWidth()
     return maxRowWidth
 end
 
+--[[
 function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, offsetForward)
     local width = self:GetMaxRowWidth()
     local height = self.rowHeight * #self.rows
@@ -250,6 +267,41 @@ function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, of
     else
         error('Not implemented')
     end
+end
+--]]
+
+local function getShift(anchor)
+    -- center => anchor
+
+    local right, up = 0, 0
+
+    if     anchor == TOPLEFT     then  right = -0.5 up = 0.5
+    elseif anchor == TOP         then  right = 0    up = 0.5
+    elseif anchor == TOPRIGHT    then  right = 0.5  up = 0.5
+    elseif anchor == LEFT        then  right = -0.5 up = 0
+    elseif anchor == CENTER      then  right = 0    up = 0
+    elseif anchor == RIGHT       then  right = 0.5  up = 0
+    elseif anchor == BOTTOMLEFT  then  right = -0.5 up = -0.5
+    elseif anchor == BOTTOM      then  right = 0    up = -0.5
+    elseif anchor == BOTTOMRIGHT then  right = 0.5  up = -0.5
+    else
+        error('Bad anchor')
+    end
+
+    return right, up
+end
+
+function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, offsetForward)
+    local baseRight, baseUp = getShift(self.anchorPoint)
+    local targetRight, targetUp = getShift(anchorPoint)
+
+    local width = self:GetMaxRowWidth()
+    local height = self.rowHeight * #self.rows
+
+    local totalRight = (targetRight - baseRight) * width + offsetRight
+    local totalUp = (targetUp - baseUp) * height + offsetUp
+
+    return self.position + self.R * totalRight + self.U * totalUp + self.F * offsetForward
 end
 
 Text.Delete = Text.Wipe
