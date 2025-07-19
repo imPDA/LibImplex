@@ -307,27 +307,37 @@ function Marker3DStatic:__init(position, orientation, texture, size, color)
     control:Create3DRenderSpace()
     control:Set3DLocalDimensions(unpack(size))
 
+    self:Move(position)
+
+    self:Orient(orientation)
+
+    control:Set3DRenderSpaceUsesDepthBuffer(select(4, unpack(orientation)))
+
+    control:SetHidden(false)
+end
+
+function Marker3DStatic:Move(position)
+    local rendX, rendY, rendZ = WorldPositionToGuiRender3DPosition(unpack(position))
+	self.control:Set3DRenderSpaceOrigin(rendX, rendY, rendZ)
+end
+
+function Marker3DStatic:Orient(orientation)
     local pitch, yaw, roll, depthBuffer = unpack(orientation)
     pitch = pitch or 0
     yaw = yaw or 0
     roll = roll or 0
 
-    -- worlds coordinates to render coordinates
-    local rendX, rendY, rendZ = WorldPositionToGuiRender3DPosition(unpack(position))
-
-	control:Set3DRenderSpaceOrigin(rendX, rendY, rendZ)
-
-	control:Set3DRenderSpaceOrientation(pitch, yaw, roll)
+    self.control:Set3DRenderSpaceOrientation(pitch, yaw, roll)
 
     local q = Q.FromEuler(orientation[3], orientation[2], orientation[1])
 
     self.R = Q.RotateVectorByQuaternion({1, 0, 0}, q)
     self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
     self.F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
+end
 
-    control:Set3DRenderSpaceUsesDepthBuffer(depthBuffer)
-
-    control:SetHidden(false)
+function Marker3DStatic:SetUseDepthBuffer(useDepthBuffer)
+    self.control:Set3DRenderSpaceUsesDepthBuffer(useDepthBuffer)
 end
 
 function Marker3DStatic:Delete()

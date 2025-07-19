@@ -60,10 +60,16 @@ function Text:SplitToRows()
             wordWidth = wordWidth + letterSpacing * (wordLength - 1)
 
             if self.maxWidth and (currentRowWidth + wordWidth + spaceWidth > self.maxWidth) then
-                self.rows[#self.rows+1] = {table.concat(currentRow, ' ', 1, wordCounter), currentRowWidth}
-                wordCounter = 1
-                currentRow[wordCounter] = word
-                currentRowWidth = wordWidth
+                if wordCounter > 0 then
+                    self.rows[#self.rows+1] = {table.concat(currentRow, ' ', 1, wordCounter), currentRowWidth}
+                    wordCounter = 1
+                    currentRow[wordCounter] = word
+                    currentRowWidth = wordWidth
+                else
+                    self.rows[#self.rows+1] = {word, wordWidth}
+                    wordCounter = 0
+                    currentRowWidth = 0
+                end
             else
                 wordCounter = wordCounter + 1
                 currentRow[wordCounter] = word
