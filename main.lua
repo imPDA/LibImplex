@@ -1,5 +1,4 @@
-local Log = LibImplex_Logger()
-local TEST_ENVIRONMENT = false
+-- local Log = LibImplex_Logger()
 
 -- ----------------------------------------------------------------------------
 
@@ -24,10 +23,10 @@ lib.callbacks = {
 
 -- ----------------------------------------------------------------------------
 
-local function stats(tbl)
+local function stats(tbl, length)
 	local total = 0
 	local max = 0
-	local length = #tbl
+	length = length or #tbl
 
 	for i = 1, length do
 		if tbl[i] > max then
@@ -41,50 +40,82 @@ local function stats(tbl)
 end
 
 function lib:OnPlayerActivated(initial)
-	local pool = LibImplex.Pool.GetPool()
-	local updateVectors = LibImplex.Marker.Marker2D.UpdateVectors
+	local updateVectors = LibImplex.Marker.UpdateVectors
+	local getUpdateableObjects = LibImplex.GetUpdateableObjects
+	-- local clearCache = LibImplex.ClearCache
 
-	local N = 10
-	local updateArray = {}
-	local counter = 0
-
-	local function updateMarkersTest()
-		local start = GetGameTimeMilliseconds()
-
-		for _ = 1, N do
-			self:FireCallbacks(EVENT_BEFORE_UPDATE)
-			updateVectors()
-
-			for _, obj in pairs(pool:GetActiveObjects()) do
-				obj.m_Marker:Update()
-			end
-
-			self:FireCallbacks(EVENT_AFTER_UPDATE)
-		end
-
-		local finish = GetGameTimeMilliseconds()
-		counter = counter + 1
-		updateArray[counter] = (finish - start) / N
-
-		if counter >= 100 then
-			local avg, max = stats(updateArray)
-			Log('Updating %d markers, avg update time: %d us, max: %d us', pool:GetActiveObjectCount(), avg * 1000, max * 1000)
-			counter = 0
-		end
-	end
-
-	local function updateMarkersRegular()
+	local function updateMarkers()
 		self:FireCallbacks(EVENT_BEFORE_UPDATE)
+		-- clearCache()
 		updateVectors()
 
-		for _, obj in pairs(pool:GetActiveObjects()) do
-			obj.m_Marker:Update()
+		for object, _ in pairs(getUpdateableObjects()) do
+			object:Update()
 		end
 
 		self:FireCallbacks(EVENT_AFTER_UPDATE)
 	end
 
-	local updateMarkers = TEST_ENVIRONMENT and updateMarkersTest or updateMarkersRegular
+	if self.sv.debugEnabled then
+		local updateArray = {}
+		local counter = 0
+
+		local function timeIt(func)
+			local function inner()
+				local repetitions = self.sv.repetitions
+				local start = GetGameTimeMilliseconds()
+
+				for _ = 1, repetitions do
+					func()
+				end
+
+				local finish = GetGameTimeMilliseconds()
+				counter = counter + 1
+				updateArray[counter] = (finish - start) / repetitions
+			end
+
+			return inner
+		end
+
+		updateMarkers = timeIt(updateMarkers)
+
+		EVENT_MANAGER:RegisterForUpdate(EVENT_NAMESPACE..'DebugWindow', 1000 * 1, function()
+			local repetitions = self.sv.repetitions
+			local avg, max = stats(updateArray, counter)
+			local totalTime = avg * repetitions
+
+			local stats = LibImplex.Context.GetContextStats()
+			local stats_table = {}
+			for context, counts in pairs(stats) do
+				stats_table[#stats_table+1] = ('%s: %d / %d'):format(context, counts[1], counts[2])
+			end
+
+			LibImplex_DebugWindowText2:SetText(
+				(
+[[|c00EE00%dx|r repetition(s)
+
+Objects per context (active/total):
+%s
+
+Avg: %.3f ms (max: %.3f ms)
+Total: %.3f ms
+Max FPS: ~%d (low: ~%d)
+Current FPS: ~%d (low: ~%d)]]
+				):format(
+					repetitions,
+					table.concat(stats_table, '\n'),
+					avg,
+					max,
+					totalTime,
+					750 / avg,
+					750 / max,
+					750 / totalTime,
+					750 / (max * repetitions)
+				)
+			)
+			counter = 0
+		end)
+	end
 
 	EVENT_MANAGER:RegisterForUpdate(EVENT_NAMESPACE, 0, updateMarkers)
 end
@@ -107,10 +138,58 @@ function lib:FireCallbacks(event)
 	end
 end
 
+function lib:AddSettings()
+	local LAM = LibAddonMenu2
+
+	if not LAM then return end
+
+	local panelName = self.name .. 'SettingsPanelControl'
+	local panelData = {
+        type = 'panel',
+        name = '[DEV] '..self.displayName,
+        author = '@imPDA',
+    }
+
+    local panel = LAM:RegisterAddonPanel(panelName, panelData)
+
+    local optionsData = {
+		{
+			type = 'checkbox',
+			name = 'Enable',
+			getFunc = function() return self.sv.debugEnabled end,
+			setFunc = function(value) self.sv.debugEnabled = value end,
+			requiresReload = true,
+		},
+		{
+			type = 'slider',
+			name = 'Repetitions',
+			getFunc = function() return self.sv.repetitions end,
+			setFunc = function(value)
+				self.sv.repetitions = value
+			end,
+			disabled = function() return not self.sv.debugEnabled end,
+			min = 1,
+			max = 300,
+		},
+    }
+
+    LAM:RegisterOptionControls(panelName, optionsData)
+end
+
 function lib:OnLoad()
-	if TEST_ENVIRONMENT then
+	self.sv = ZO_SavedVars:NewAccountWide('LibImplexSavedVariables', 1, nil, {
+		debugEnabled = false,
+		repetitions = 1,
+		devMode = false,
+	})
+
+	if self.sv.devMode then
 		SLASH_COMMANDS['/r'] = SLASH_COMMANDS['/reloadui']
-		LibImplex_ShowDebugWindow()
+		self:AddSettings()
+
+		if self.sv.debugEnabled then
+			LibImplex_ShowDebugWindow()
+		end
 	end
 
 	EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_PLAYER_ACTIVATED, function(_, initial) self:OnPlayerActivated(initial) end)

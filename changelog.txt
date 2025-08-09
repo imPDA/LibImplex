@@ -1,3 +1,13 @@
+V. 13
+- Added "Line" object
+- Added API to draw outline for text and 3D markers with Lines
+- Added debug: debug window and settings
+- Engine rework: draw level calculation of 3D markers, introduced context, API for 3D markers to move and orient them, ...
+- Fixes and improvements for writing, including API to efmove, orient, colorize, etc.
+
+V. 12
+- Writing word wrapping improvements
+
 V. 11
 - CENTER anchor for writing
 - All anchors for `GetRelativePointCoordinates` function

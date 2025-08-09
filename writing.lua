@@ -1,4 +1,5 @@
-local Object = LibImplex.Marker._3DStatic
+local writingContext = LibImplex.Marker('writing')
+
 local GetLetterSizeCoefficients = LibImplex.Textures.Alphabet.GetSizeCoefficients
 local GetLetterCoordinates = LibImplex.Textures.Alphabet.GetCharacterCoordinates
 local Q = LibImplex.Q
@@ -16,7 +17,14 @@ local BOTTOMRIGHT   = BOTTOMRIGHT
 local Text = LibImplex.class()
 Text.__index = Text
 
-function Text:__init(text, anchorPoint, position, orientation, size, color, maxWidth)
+local Object = writingContext._3D
+local StaticObject = writingContext._3DStatic
+Text.OBJECT_FACTORIES = {
+    Object = Object,
+    StaticObject = StaticObject,
+}
+
+function Text:__init(text, anchorPoint, position, orientation, size, color, maxWidth, enableOutline, objectFactory)
     self.text = text
     self.objects = {}
 
@@ -27,6 +35,11 @@ function Text:__init(text, anchorPoint, position, orientation, size, color, maxW
     self.maxWidth = maxWidth
 
     self:Orient(orientation or {0, 0, 0})
+
+    self.enableOutline = enableOutline
+    self.outline = {}
+
+    self.objectFactory = objectFactory or StaticObject
 end
 
 local TEXTURE = LibImplex.Textures.Alphabet.texture
@@ -73,7 +86,11 @@ function Text:SplitToRows()
             else
                 wordCounter = wordCounter + 1
                 currentRow[wordCounter] = word
-                currentRowWidth = currentRowWidth + wordWidth + spaceWidth
+                currentRowWidth = currentRowWidth + wordWidth
+
+                if wordCounter > 1 then
+                    currentRowWidth = currentRowWidth + spaceWidth
+                end
             end
         end
 
@@ -96,6 +113,7 @@ function Text:RenderRow(index, position)
 
     local cursor = position
 
+    local objectFactory = self.objectFactory
     for i = 1, rowLength do
         local letter = row:sub(i, i)
 
@@ -106,9 +124,9 @@ function Text:RenderRow(index, position)
 
             cursor = cursor + r * w * 50
 
-            local letterObject = Object(cursor, self.orientation, TEXTURE, {w, h}, self.color)
-            letterObject.control:SetTextureCoords(GetLetterCoordinates(letter))
-            letterObject.control:SetDrawLevel(self.drawLevel)
+            local letterObject = objectFactory(cursor, self.orientation, TEXTURE, {w, h}, self.color)
+            letterObject:SetTextureCoords(GetLetterCoordinates(letter))
+            letterObject:SetDrawLevel(self.drawLevel)
             letterObject.width = w
             letterObject.height = h
 
@@ -154,6 +172,31 @@ function Text:Render()
         elseif self.anchorPoint == TOP or self.anchorPoint == CENTER then
             self:RenderRow(i, START_POSITION - u * ((i-1) * H) - r * (self.rows[i][2] * 0.5))
         end
+    end
+
+    if self.enableOutline then
+        self:Outline()
+    end
+end
+
+function Text:Outline()
+    self:RemoveOutline()
+
+    local tl = self:GetRelativePointCoordinates(TOPLEFT)
+    local tr = self:GetRelativePointCoordinates(TOPRIGHT)
+    local br = self:GetRelativePointCoordinates(BOTTOMRIGHT)
+    local bl = self:GetRelativePointCoordinates(BOTTOMLEFT)
+
+    self.outline[1] = LibImplex.Lines.Line(tl, tr)
+    self.outline[2] = LibImplex.Lines.Line(tr, br)
+    self.outline[3] = LibImplex.Lines.Line(br, bl)
+    self.outline[4] = LibImplex.Lines.Line(bl, tl)
+end
+
+function Text:RemoveOutline()
+    for i = 1, #self.outline do
+        self.outline[i]:Delete()
+        self.outline[i] = nil
     end
 end
 
@@ -201,7 +244,7 @@ function Text:SetAlpha(alpha)
 
     local objects = self.objects
     for i = 1, #objects do
-        objects[i].control:SetAlpha(alpha)
+        objects[i]:SetAlpha(alpha)
     end
 end
 
@@ -210,7 +253,7 @@ function Text:SetColor(color)
 
     local objects = self.objects
     for i = 1, #objects do
-        objects[i].control:SetColor(unpack(color))
+        objects[i]:SetColor(unpack(color))
     end
 end
 
@@ -225,56 +268,25 @@ function Text:Wipe()
         self.objects[i]:Delete()
         self.objects[i] = nil
     end
+
+    self:RemoveOutline()
 end
 
 function Text:GetMaxRowWidth()
     if #self.rows < 1 then return 0 end
 
-    local maxRowWidth = math.huge
+    local maxRowWidth = 0
 
     for rowIndex = 1, #self.rows do
         local row = self.rows[rowIndex]
 
-        if row[2] < maxRowWidth then
+        if row[2] > maxRowWidth then
             maxRowWidth = row[2]
         end
     end
 
     return maxRowWidth
 end
-
---[[
-function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, offsetForward)
-    local width = self:GetMaxRowWidth()
-    local height = self.rowHeight * #self.rows
-
-    if self.anchorPoint == TOP then
-        if anchorPoint == TOPRIGHT then
-            return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == RIGHT then
-            return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (-height * 0.5 + offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == BOTTOMRIGHT then
-            return self.position + self.R * (width * 0.5 + offsetRight) + self.U * (-height + offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == TOP then
-            return self.position + self.R * (offsetRight) + self.U * (offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == CENTER then
-            return self.position + self.R * (offsetRight) + self.U * (-height * 0.5 + offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == BOTTOM then
-            return self.position + self.R * (offsetRight) + self.U * (-height + offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == TOPLEFT then
-            return self.position + self.R * (-width * 0.5 + offsetRight) + self.U * (offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == LEFT then
-            return self.position + self.R * (-width * 0.5 + offsetRight) + self.U * (-height * 0.5 + offsetUp) + self.F * (offsetForward)
-        elseif anchorPoint == BOTTOMLEFT then
-            return self.position + self.R * (-width * 0.5 + offsetRight) + self.U * (-height + offsetUp) + self.F * (offsetForward)
-        else
-            error('Wrong anchor point')
-        end
-    else
-        error('Not implemented')
-    end
-end
---]]
 
 local function getShift(anchor)
     -- center => anchor
@@ -298,6 +310,10 @@ local function getShift(anchor)
 end
 
 function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, offsetForward)
+    offsetRight = offsetRight or 0
+    offsetUp = offsetUp or 0
+    offsetForward = offsetForward or 0
+
     local baseRight, baseUp = getShift(self.anchorPoint)
     local targetRight, targetUp = getShift(anchorPoint)
 

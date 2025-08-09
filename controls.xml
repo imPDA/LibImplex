@@ -19,7 +19,7 @@
             <AnchorFill />
         </TopLevelControl> -->
 
-        <!-- <Line name="LibImplex_LinkTemplate" textureFile="EsoUI/Art/Champion/champion_star_link.dds" virtual="true" /> -->
+        <Line name="LibImplex_LineTemplate" thickness="1" color="FFFFFF" virtual="true" />
 
         <!-- <StatusBar name="LibImplex_StatusBar" level="500" virtual="true" textureFile="EsoUI/Art/UnitAttributeVisualizer/attributeBar_dynamic_fill.dds">
             <Dimensions y="17" />
