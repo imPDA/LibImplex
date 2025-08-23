@@ -1,3 +1,11 @@
+V. 14
+- All non-default markers now have direct access to control
+- Added functionality to quaternion
+- Added snake example
+- General fixes of 3D objects
+- Added camera orientation info to debug windows
+- Added 3D origin for debugging
+
 V. 13
 - Added "Line" object
 - Added API to draw outline for text and 3D markers with Lines

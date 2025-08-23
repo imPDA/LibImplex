@@ -103,6 +103,10 @@ function Marker:__init(pool, position, orientation, texture, size, color, update
     if color then control:SetColor(unpack(color)) end
 
     _controls[self] = control
+
+    if pool ~= DEFAULT_POOL then
+        self.control = control
+    end
 end
 
 local function getUpdateableObjects()
@@ -198,6 +202,7 @@ local uX, uY, uZ = 0, 0, 0
 local fX, fY, fZ = 0, 0, 0
 -- local pwX, pwY, pwZ = 0, 0, 0
 local prwX, prwY, prwZ = 0, 0, 0
+local cPitch, cYaw, cRoll = 0, 0, 0
 
 local function UpdateVectors()
     Set3DRenderSpaceToCurrentCamera(MARKERS_CONTROL_2D_NAME)
@@ -210,6 +215,8 @@ local function UpdateVectors()
 
     -- _, pwX, pwY, pwZ = GetUnitWorldPosition('player')
     _, prwX, prwY, prwZ = GetUnitRawWorldPosition('player')
+
+    -- cPitch, cYaw, cRoll = MARKERS_CONTROL_2D:Get3DRenderSpaceOrientation()
 end
 
 --- @class Marker2D : Marker
@@ -274,7 +281,7 @@ function Marker2D:Delete()
     updateableObjects[self] = nil
 end
 
---- @class MarkerStatic3D : Marker
+--- @class Marker3DStatic : Marker
 local Marker3DStatic = LibImplex.class(Marker)
 
 function Marker3DStatic:__init(pool, position, orientation, texture, size, color)
@@ -320,6 +327,7 @@ function Marker3DStatic:RemoveOutline()
 end
 
 function Marker3DStatic:Move(position)
+    self.position = position
     local rendX, rendY, rendZ = WorldPositionToGuiRender3DPosition(unpack(position))
 	_controls[self]:Set3DRenderSpaceOrigin(rendX, rendY, rendZ)
 end
@@ -424,10 +432,13 @@ local function _update3d(marker)
 
     local dX, dY, dZ = x - cX, y - cY, z - cZ
 
-    -- local Z = fX * dX + fY * dY + fZ * dZ
-    -- if Z < 0 then return end
-    -- markerControl:SetDrawLevel(-Z)  -- "2D" way
+    --[[
+    local Z = fX * dX + fY * dY + fZ * dZ
+    if Z < 0 then return end
+    markerControl:SetDrawLevel(-Z)  -- "2D" way
+    --]]
 
+    ---[[
     local F = marker.F
     local Fx, Fy, Fz = F[1], F[2], F[3]
 
@@ -457,6 +468,7 @@ local function _update3d(marker)
         markerControl:SetDrawLevel(-D)
         -- cache[F] = -D
     end
+    --]]
 end
 
 function Marker3D:__init(pool, position, orientation, texture, size, color, ...)

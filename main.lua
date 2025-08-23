@@ -171,6 +171,20 @@ function lib:AddSettings()
 			min = 1,
 			max = 300,
 		},
+		{
+			type = 'checkbox',
+			name = 'Show 3D Origin',
+			getFunc = function() return self.sv.showOrigin end,
+			setFunc = function(value)
+				self.sv.showOrigin = value
+				if value then
+					LibImplex_ShowOrigin()
+				else
+					LibImplex_HideOrigin()
+				end
+			end,
+			disabled = function() return not self.sv.debugEnabled end,
+		}
     }
 
     LAM:RegisterOptionControls(panelName, optionsData)
@@ -189,6 +203,9 @@ function lib:OnLoad()
 
 		if self.sv.debugEnabled then
 			LibImplex_ShowDebugWindow()
+			if self.sv.showOrigin then
+				LibImplex_ShowOrigin()
+			end
 		end
 	end
 

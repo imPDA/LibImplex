@@ -29,6 +29,17 @@ function LibImplex_ShowDebugWindow()
         local crX, crY, crZ = GuiRender3DPositionToWorldPosition(crsoX, crsoY, crsoZ)
         text = text .. ('Camera GuiRender3DPositionToWorldPosition: {%.2f, %.2f, %.2f}\n'):format(crX, crY, crZ)
 
+        text = text .. '\n'
+
+        local fX, fY, fZ = LibImplex_2DMarkers:Get3DRenderSpaceForward()
+        text = text .. ('Camera Forward: {%.2f, %.2f, %.2f}\n'):format(fX, fY, fZ)
+
+        local rX, rY, rZ = LibImplex_2DMarkers:Get3DRenderSpaceRight()
+        text = text .. ('Camera Right: {%.2f, %.2f, %.2f}\n'):format(rX, rY, rZ)
+
+        local uX, uY, uZ = LibImplex_2DMarkers:Get3DRenderSpaceUp()
+        text = text .. ('Camera Up: {%.2f, %.2f, %.2f}\n'):format(uX, uY, uZ)
+
         TEXT:SetText(text)
     end)
 end

@@ -1,8 +1,8 @@
 ## Title: |cAFD3FFLibImplex|r
 ## Description: Simple (hope so) marker "engine"
 ## Author: |c7c42f2imPDA|r
-## AddOnVersion: 13
-## APIVersion: 101046
+## AddOnVersion: 14
+## APIVersion: 101047
 ## IsLibrary: true
 ## SavedVariables: LibImplexSavedVariables
 ## OptionalDependsOn: LibDebugLogger>=268 LibAddonMenu-2.0>=40
@@ -17,8 +17,9 @@ objects.lua
 
 ; movewriting.lua
 
-debugwindow/controls.xml
-debugwindow/main.lua
+debug/origin.lua
+debug/controls.xml
+debug/main.lua
 
 main.lua
 
@@ -27,6 +28,7 @@ writing.lua
 
 ; examples/groundmarkers.lua
 ; examples/circle.lua
+; examples/snake.lua
 
 ; This Add-on is not created by, affiliated with or sponsored by ZeniMax
 ; Media Inc. or its affiliates. The Elder Scrolls® and related logos are

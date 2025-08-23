@@ -27,7 +27,7 @@ local COLOR = {173 / 255, 216 / 255, 230 / 255}  -- #add8e6
 local function placeMarkers()
     if GetZoneId(GetUnitZoneIndex('player')) ~= ZONE_ID then return end
 
-    ---[[ Markers on the ground
+    --[[ Markers on the ground
     local ORIENTATION = {-PI * 0.5, -PI * 0.36, 0, true}
     for i = 1, #MARKER_POSITIONS do
         local m = LibImplex.Marker._3DStatic(
@@ -43,7 +43,7 @@ local function placeMarkers()
     end
     --]]
 
-    ---[[ Big text
+    --[[ Big text
     local LOREM_IPSUM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut tempus laoreet efficitur. Sed nisl neque, pellentesque sit amet lectus sit amet, tempus pretium lorem. Aenean facilisis quam sed egestas dictum. Integer fringilla dui eu pharetra sodales. Maecenas auctor dictum est. Pellentesque urna quam, bibendum a finibus consequat, placerat vel neque. Sed consectetur quis leo in ullamcorper. Phasellus ultrices efficitur luctus. Sed id maximus purus. Morbi commodo velit vel velit cursus ultricies. In hac habitasse platea dictumst. Donec quis viverra odio, quis ornare lorem. Nunc eu ullamcorper est, at bibendum dui. Aenean lacinia orci ut efficitur consectetur. Vestibulum pretium arcu at mi pulvinar, vitae efficitur eros luctus. In sed eros at ex feugiat auctor. Cras vitae sodales quam. Morbi pharetra tincidunt pharetra. Donec dictum scelerisque nisi, in faucibus massa faucibus imperdiet. Phasellus pharetra nibh a ipsum tincidunt, ac sagittis mi efficitur. Integer a nulla fringilla, tincidunt ex quis, malesuada nisl. Nulla fermentum condimentum faucibus. Phasellus gravida massa id convallis consequat. Integer volutpat, ipsum et egestas ultricies, ligula diam ullamcorper est, sit amet rhoncus augue eros non velit. Nulla facilisi. Etiam lacinia odio in finibus bibendum. Duis maximus libero vel maximus condimentum. Sed id congue quam, ut eleifend lacus. Praesent fringilla ultrices venenatis. In elit lacus, euismod vitae ultrices nec, vulputate id libero. Integer efficitur tempus diam sed blandit. Vivamus id massa vel lectus eleifend viverra ac et sem. Mauris congue hendrerit lacus non facilisis. Nam volutpat erat sollicitudin pharetra sagittis. Aenean maximus eros sed risus fermentum blandit. Donec consequat libero in libero posuere condimentum. Integer sem est, blandit eu aliquet eu, volutpat non arcu. In dignissim nunc quis nisi tempus, ut dapibus quam pharetra. Cras sit amet velit eu elit sodales laoreet. Nulla accumsan nisl a enim facilisis, eu suscipit nunc rutrum. Sed vulputate mattis neque, non accumsan nulla condimentum sed. Morbi sollicitudin nisi lectus, vitae consectetur mi viverra a. Donec quis rutrum elit. Morbi at accumsan elit. Sed id elit aliquet, tempus nisi volutpat, pharetra leo. Duis a interdum enim.'
 
     local loremIpsum = LibImplex.Text(LOREM_IPSUM:sub(1), TOPLEFT, TEXT_POSITION + LibImplex.Vector({0.5, 6000, 0}), {PI / 3, 0.938 * PI, 0, true}, 1.3, COLOR, 4500)

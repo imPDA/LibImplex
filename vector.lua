@@ -102,6 +102,36 @@ local function FromEuler(yaw, pitch, roll)
     }
 end
 
+local function copysign(x, y)
+    return (y >= 0 and math.abs(x)) or -math.abs(x)
+end
+
+local function ToEuler(q)  -- TODO: imports, etc.
+    local w, x, y, z = q[1], q[2], q[3], q[4]
+
+    -- Roll (x-axis rotation)
+    local sinr_cosp = 2 * (w * x + y * z)
+    local cosr_cosp = 1 - 2 * (x * x + y * y)
+    local roll = math.atan2(sinr_cosp, cosr_cosp)
+
+    -- Pitch (y-axis rotation)
+    local sinp = 2 * (w * y - z * x)
+    local pitch
+    if math.abs(sinp) >= 1 then
+        -- Use 90 degrees if out of range
+        pitch = copysign(math.pi / 2, sinp)
+    else
+        pitch = math.asin(sinp)
+    end
+
+    -- Yaw (z-axis rotation)
+    local siny_cosp = 2 * (w * z + x * y)
+    local cosy_cosp = 1 - 2 * (y * y + z * z)
+    local yaw = math.atan2(siny_cosp, cosy_cosp)
+
+    return yaw, pitch, roll
+end
+
 local function RotateVectorByQuaternion(v, q)
     local s = q[1]
     local u = Vector({q[2], q[3], q[4]})
@@ -118,6 +148,15 @@ local function RotateVectorByQuaternion(v, q)
     })
 end
 
+local function Sum(q1, q2)
+    return {
+        q1[1] + q2[1],
+        q1[2] + q2[2],
+        q1[3] + q2[3],
+        q1[4] + q2[4],
+    }
+end
+
 -- ----------------------------------------------------------------------------
 
 LibImplex = LibImplex or {}
@@ -126,5 +165,7 @@ LibImplex.Vector = Vector
 
 LibImplex.Q = {
     FromEuler = FromEuler,
+    ToEuler = ToEuler,
     RotateVectorByQuaternion = RotateVectorByQuaternion,
+    Sum = Sum,
 }
