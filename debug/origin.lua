@@ -39,9 +39,9 @@ end
 function LibImplex_ShowOrigin()
     DeleteOrigin()
 
-    ORIGIN[1] = originObjects._3D(O, {0, HALF_PI, -HALF_PI, true},  TEXTURE, SIZE, RED, updateX)
-    ORIGIN[2] = originObjects._3D(O, {0, 0, 0, true},               TEXTURE, SIZE, GREEN, updateY)
-    ORIGIN[3] = originObjects._3D(O, {HALF_PI, 0, 0, true},         TEXTURE, SIZE, BLUE, updateZ)
+    ORIGIN[1] = originObjects._3D(O, {0, HALF_PI, -HALF_PI},  TEXTURE, SIZE, RED, updateX)
+    ORIGIN[2] = originObjects._3D(O, {0, 0, 0},               TEXTURE, SIZE, GREEN, updateY)
+    ORIGIN[3] = originObjects._3D(O, {HALF_PI, 0, 0},         TEXTURE, SIZE, BLUE, updateZ)
 end
 
 LibImplex_HideOrigin = DeleteOrigin
