@@ -340,11 +340,27 @@ function Marker3DStatic:Orient(orientation)
 
     _controls[self]:Set3DRenderSpaceOrientation(pitch, yaw, roll)
 
-    local q = Q.FromEuler(orientation[3], orientation[2], orientation[1])
+    local q = Q.FromEuler(pitch, yaw, roll)
 
-    self.R = Q.RotateVectorByQuaternion({1, 0, 0}, q)
-    self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
     self.F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
+    self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
+    self.R = Q.RotateVectorByQuaternion({-1, 0, 0}, q)
+end
+
+function Marker3DStatic:DrawNormal(length)
+    if self.normal then
+        return self.normal:Move(self.position, self.position + self.F * length)
+    end
+
+    length = length or 10
+    self.normal = LibImplex.Lines.Line(self.position, self.position + self.F * length)
+end
+
+function Marker3DStatic:RemoveNormal()
+    if not self.normal then return end
+
+    self.normal:Delete()
+    self.normal = nil
 end
 
 function Marker3DStatic:Delete()
@@ -580,6 +596,11 @@ function Line:Update()
 
     -- lineControl:SetDrawLevel(-Z1)
     control:SetHidden(false)
+end
+
+function Line:Move(endpoint1, endpoint2)
+    self.x1, self.y1, self.z1 = unpack(endpoint1)
+    self.x2, self.y2, self.z2 = unpack(endpoint2)
 end
 
 -- ----------------------------------------------------------------------------

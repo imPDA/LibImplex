@@ -19,8 +19,8 @@ function Cube:__init(position, orientation, size, color)
 
     self.Q = Q.FromEuler(unpack(orientation))
 
-    self.upOrientation = {Q.ToEuler(Q.Sum(Q.FromEuler(HALF_PI, 0, 0), self.Q))}
-    self.rightOrientation = {Q.ToEuler(Q.Sum(Q.FromEuler(0, HALF_PI, 0), self.Q))}
+    self.upOrientation = {Q.ToEuler(Q.FromEuler(HALF_PI, 0, 0) * self.Q)}
+    self.rightOrientation = {Q.ToEuler(Q.FromEuler(0, HALF_PI, 0) * self.Q)}
 
     self.upOrientation[4] = true
     self.rightOrientation[4] = true
@@ -83,6 +83,14 @@ function Cube:Draw()
         {self.size, self.size},
         self.color
     )
+
+    -- self:DrawNormals()
+end
+
+function Cube:DrawNormals()
+    for i = 1, #self.objects do
+        self.objects[i]:DrawNormal()
+    end
 end
 
 function Cube:Clear()

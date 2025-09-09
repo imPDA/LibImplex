@@ -1,3 +1,8 @@
+V. 15
+- Multiple fixes for quaternions and how rotation handled. Now it is 100% correct and solid.
+- New examples to check correctness of rotation computations (cube.lua, rotations.lua)
+- New function - draw normal (for the 3D texture).
+
 V. 14
 - All non-default markers now have direct access to control
 - Added functionality to quaternion
