@@ -19,7 +19,7 @@
             <AnchorFill />
         </TopLevelControl> -->
 
-        <Line name="LibImplex_LineTemplate" thickness="1" color="FFFFFF" virtual="true" />
+        <Line name="LibImplex_LineTemplate" tier="HIGH" thickness="1" color="FFFFFF" virtual="true" />
 
         <!-- <StatusBar name="LibImplex_StatusBar" level="500" virtual="true" textureFile="EsoUI/Art/UnitAttributeVisualizer/attributeBar_dynamic_fill.dds">
             <Dimensions y="17" />
