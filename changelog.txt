@@ -1,3 +1,7 @@
+V. 16
+- Added Font class and monospace font for numbers (for BG timer)
+- Small changes in size calculations due to switching to Fonts
+
 V. 15
 - Multiple fixes for quaternions and how rotation handled. Now it is 100% correct and solid.
 - New examples to check correctness of rotation computations (cube.lua, rotations.lua)

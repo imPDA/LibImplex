@@ -207,6 +207,19 @@ local ALPHABET = {
         ['-'] = { 856,  898, 850, 1020 },
         ['_'] = { 902,  985, 850, 1020 },
     },
+    a = {
+        ['0'] = {  12,   79, 850, 1000 },
+        ['1'] = {  79,  146, 850, 1000 },
+        ['2'] = { 152,  219, 850, 1000 },
+        ['3'] = { 225,  292, 850, 1000 },
+        ['4'] = { 297,  364, 850, 1000 },
+        ['5'] = { 367,  434, 850, 1000 },
+        ['6'] = { 437,  504, 850, 1000 },
+        ['7'] = { 508,  575, 850, 1000 },
+        ['8'] = { 578,  645, 850, 1000 },
+        ['9'] = { 650,  717, 850, 1000 },
+        [':'] = { 649,  678, 700, 850 },
+    },
     fullSize = 1024,
 }
 
@@ -217,22 +230,27 @@ LibImplex.Textures = LibImplex.Textures or {}
 
 LibImplex.Textures.Numbers = NUMBER_TEXTURES
 
+-- TODO: Fonts
 LibImplex.Textures.Alphabet = {
-    texture = ALPHABET.path,
-    GetCharacterCoordinates = function(letter)
-        local l, r, t, b = unpack(ALPHABET.characterCoordinates[letter])
-        local full = ALPHABET.fullSize
+    -- texture = ALPHABET.path,
+    -- GetCharacterCoordinates = function(letter)
+    --     local l, r, t, b = unpack(ALPHABET.characterCoordinates[letter])
+    --     local full = ALPHABET.fullSize
 
-        return l/full, r/full, t/full, b/full
-    end,
-    GetSizeCoefficients = function(letter, size)
-        local l, r, t, b = unpack(ALPHABET.characterCoordinates[letter])
+    --     return l/full, r/full, t/full, b/full
+    -- end,
+    -- GetSizeCoefficients = function(letter, size)
+    --     local l, r, t, b = unpack(ALPHABET.characterCoordinates[letter])
 
-        local w = size * (r - l) / SCALE_FACTOR
-        local h = size * (b - t) / SCALE_FACTOR
+    --     -- local w = size * (r - l) / SCALE_FACTOR
+    --     -- local h = size * (b - t) / SCALE_FACTOR
 
-        -- Log('%s - w: %.2f, h: %2.f', letter, w, h)
+    --     return size * (r - l) / (b - t), size
 
-        return w, h
-    end,
+    --     -- Log('%s - w: %.2f, h: %2.f', letter, w, h)
+
+    --     -- return w, h
+    -- end,
+    characterCoordinates = ALPHABET.characterCoordinates,
+    a = ALPHABET.a,
 }

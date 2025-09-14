@@ -1,8 +1,6 @@
-local writingContext = LibImplex.Marker('writing')
-
-local GetLetterSizeCoefficients = LibImplex.Textures.Alphabet.GetSizeCoefficients
-local GetLetterCoordinates = LibImplex.Textures.Alphabet.GetCharacterCoordinates
 local Q = LibImplex.Q
+
+local writingContext = LibImplex.Marker('writing')
 
 local TOPLEFT       = TOPLEFT
 local TOP           = TOP
@@ -14,8 +12,48 @@ local BOTTOMLEFT    = BOTTOMLEFT
 local BOTTOM        = BOTTOM
 local BOTTOMRIGHT   = BOTTOMRIGHT
 
+-- ----------------------------------------------------------------------------
+
+local Font = LibImplex.class()
+
+function Font:__init(name, textureFileName, textureSize, coordinates)
+    self.name = name
+    self.textureFileName = textureFileName
+
+    self._coordinates = {}
+    self._widthToHeight = {}
+
+    for letter, c in pairs(coordinates) do
+        self._coordinates[letter] = {
+            c[1] / textureSize,
+            c[2] / textureSize,
+            c[3] / textureSize,
+            c[4] / textureSize,
+        }
+
+        self._widthToHeight[letter] = (c[2] - c[1]) / (c[4] - c[3])
+    end
+end
+
+function Font:GetCoordinates(letter)
+    return unpack(self._coordinates[letter])
+end
+
+function Font:GetSizes(letter, size)
+    return self._widthToHeight[letter] * size, size
+end
+
+local Univers67 = Font('Univers 67', 'LibImplex/textures/univers67.dds', 1024, LibImplex.Textures.Alphabet.characterCoordinates)
+local _Monospace = Font('_Monospace', 'LibImplex/textures/univers67.dds', 1024, LibImplex.Textures.Alphabet.a)
+
+LibImplex.Fonts = {
+    Univers67 = Univers67,
+    _Monospace = _Monospace,
+}
+
+-- ----------------------------------------------------------------------------
+
 local Text = LibImplex.class()
-Text.__index = Text
 
 local Object = writingContext._3D
 local StaticObject = writingContext._3DStatic
@@ -24,7 +62,7 @@ Text.OBJECT_FACTORIES = {
     StaticObject = StaticObject,
 }
 
-function Text:__init(text, anchorPoint, position, orientation, size, color, maxWidth, enableOutline, objectFactory)
+function Text:__init(text, anchorPoint, position, orientation, size, color, maxWidth, enableOutline, objectFactory, font)
     self.text = text
     self.objects = {}
 
@@ -40,9 +78,9 @@ function Text:__init(text, anchorPoint, position, orientation, size, color, maxW
     self.outline = {}
 
     self.objectFactory = objectFactory or StaticObject
+    self.font = font or Univers67
 end
 
-local TEXTURE = LibImplex.Textures.Alphabet.texture
 local LETTER_SPACING = 5
 local SPACE_WIDTH = 40
 
@@ -65,7 +103,7 @@ function Text:SplitToRows()
 
             for i = 1, wordLength do
                 local letter = word:sub(i, i)
-                local w, h = GetLetterSizeCoefficients(letter, self.size)
+                local w, h = self.font:GetSizes(letter, self.size)
 
                 wordWidth = wordWidth + w * 100
             end
@@ -112,6 +150,7 @@ function Text:RenderRow(index, position)
     local r = self.R
 
     local cursor = position
+    local texture = self.font.textureFileName
 
     local objectFactory = self.objectFactory
     for i = 1, rowLength do
@@ -120,15 +159,18 @@ function Text:RenderRow(index, position)
         if letter == ' ' then
             cursor = cursor + r * spaceWidth
         else
-            local w, h = GetLetterSizeCoefficients(letter, self.size)
+            local w, h = self.font:GetSizes(letter, self.size)
 
             cursor = cursor + r * w * 50
 
-            local letterObject = objectFactory(cursor, self.orientation, TEXTURE, {w, h}, self.color)
-            letterObject:SetTextureCoords(GetLetterCoordinates(letter))
+            local letterObject = objectFactory(cursor, self.orientation, texture, {w, h}, self.color)
+            letterObject:SetTextureCoords(self.font:GetCoordinates(letter))
             letterObject:SetDrawLevel(self.drawLevel)
             letterObject.width = w
             letterObject.height = h
+
+            -- TODO: add function to draw normal for text object, not for each letter separately
+            -- letterObject:DrawNormal(300)
 
             cursor = cursor + r * w * 50
 
@@ -149,28 +191,32 @@ local ALLOWED_ANCHOR_POINTS = {
 
 function Text:Render()
     self:Wipe()
+    self.rowHeight = self.size * 100  -- TODO: move to new place since font simplified things a bit
 
     local r = self.R
     local u = self.U
 
-    local W, H = GetLetterSizeCoefficients(self.text:sub(1, 1), self.size)
-
-    H = H * 100
-    self.rowHeight = H
+    local RH = self.rowHeight
 
     self:SplitToRows()
 
-    local START_POSITION = self.position - u * H * 0.5  -- + RIGHT * W * 50
+    local START_POSITION = self.position - u * RH * 0.5  -- + RIGHT * W * 50
 
     if self.anchorPoint == CENTER then
-        START_POSITION = START_POSITION + u * H * #self.rows * 0.5
+        START_POSITION = START_POSITION + u * RH * #self.rows * 0.5
     end
 
     for i = 1, #self.rows do
         if self.anchorPoint == TOPLEFT then
-            self:RenderRow(i, START_POSITION - u * ((i-1) * H))
+            self:RenderRow(i, START_POSITION - u * ((i-1) * RH))
         elseif self.anchorPoint == TOP or self.anchorPoint == CENTER then
-            self:RenderRow(i, START_POSITION - u * ((i-1) * H) - r * (self.rows[i][2] * 0.5))
+            self:RenderRow(i, START_POSITION - u * ((i-1) * RH) - r * (self.rows[i][2] * 0.5))
+        elseif self.anchorPoint == LEFT then
+            self:RenderRow(i, START_POSITION + u * RH * 0.5)
+        elseif self.anchorPoint == RIGHT then
+            self:RenderRow(i, START_POSITION + u * RH * 0.5 - r * (self.rows[i][2]))
+        elseif self.anchorPoint == BOTTOM then
+            self:RenderRow(i, START_POSITION + u * RH - r * (self.rows[i][2] * 0.5))
         end
     end
 
@@ -228,9 +274,10 @@ function Text:SetDrawLevel(drawLevel)
 end
 
 function Text:Orient(orientation)
-    self.orientation = orientation
+    -- TODO: recheck if I can do something with it
+    self.orientation = {orientation[3], orientation[2], orientation[1], orientation[4]}
 
-    local q = Q.FromEuler(orientation[3], orientation[2], orientation[1])
+    local q = Q.FromEuler(unpack(self.orientation))
 
     self.R = Q.RotateVectorByQuaternion({1, 0, 0}, q)
     self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)

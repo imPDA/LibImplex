@@ -5,9 +5,12 @@ function LibImplex_ShowDebugWindow()
     TOP_LEVEL_CONTROL:SetHidden(false)
 
     EVENT_MANAGER:RegisterForUpdate('LibImplex_DebugWindow_Update', 1000/60, function()
-        local zoneId = GetZoneId(GetUnitZoneIndex('player'))
-
         local text = ''
+
+        local zoneIndex = GetUnitZoneIndex('player')
+        local zoneName = GetZoneNameByIndex(zoneIndex)
+        local zoneId = GetZoneId(zoneIndex)
+        text = text .. ('%s (index: %d, ID: %d)\n'):format(zoneName, zoneIndex, zoneId)
 
         local _, prX, prY, prZ = GetUnitRawWorldPosition('player')
         text = text .. ('GetUnitRawWorldPosition: {%d, %d, %d}\n'):format(prX, prY, prZ)
