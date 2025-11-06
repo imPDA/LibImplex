@@ -1,14 +1,17 @@
 -- local Log = LibImplex_Logger()
 
+hstructure V
+    x : number
+    y : number
+    z : number
+end
+
 local WorldPositionToGuiRender3DPosition = WorldPositionToGuiRender3DPosition
 local GuiRender3DPositionToWorldPosition = GuiRender3DPositionToWorldPosition
 local GetWorldDimensionsOfViewFrustumAtDepth = GetWorldDimensionsOfViewFrustumAtDepth
 local Set3DRenderSpaceToCurrentCamera = Set3DRenderSpaceToCurrentCamera
 -- local GetUnitWorldPosition = GetUnitWorldPosition
 local GetUnitRawWorldPosition = GetUnitRawWorldPosition
-
-local CENTER = CENTER
-local GuiRoot = GuiRoot
 
 local Q = LibImplex.Q
 
@@ -85,6 +88,16 @@ local updateableObjects = setmetatable({}, {__mode = "k"})
 --- @field base Marker Base class
 local Marker = LibImplex.class()
 
+
+local hstructure Position
+    x : number
+    y : number
+    z : number
+end
+
+local POSITION_COMPONENTS = {}
+local COMPONENT_TO_MARKER = {}
+
 --- Constructor for Marker
 --- @param position table|Vector X Y Z
 --- @param orientation table Pitch Yaw Roll
@@ -93,8 +106,9 @@ local Marker = LibImplex.class()
 --- @param color table RGB
 --- @param updateFunction function|nil Update function
 function Marker:__init(pool, position, orientation, texture, size, color, updateFunction)
-    self.position = position
-    self[1], self[2], self[3] = position[1], position[2], position[3]
+    local positionComponent = 
+    POSITION_COMPONENTS[#POSITION_COMPONENTS+1] = 
+
     self.orientation = orientation
 
     self.pool = pool
@@ -200,13 +214,20 @@ local UI_WIDTH, UI_HEIGHT = GuiRoot:GetDimensions()
 local NEGATIVE_UI_HEIGHT = -UI_HEIGHT
 -- UI_HEIGHT_K = NEGATIVE_UI_HEIGHT / getK()
 
-local cX, cY, cZ = 0, 0, 0
-local rX, rY, rZ = 0, 0, 0
-local uX, uY, uZ = 0, 0, 0
-local fX, fY, fZ = 0, 0, 0
+local cX : number, cY : number, cZ : number = 0, 0, 0
+local rX : number, rY : number, rZ : number = 0, 0, 0
+local uX : number, uY : number, uZ : number = 0, 0, 0
+local fX : number, fY : number, fZ : number = 0, 0, 0
+
+-- local C : V = hmake V {x=0, y=0, z=0}
+-- local F : V = hmake V {x=0, y=0, z=0}
+-- local R : V = hmake V {x=0, y=0, z=0}
+-- local U : V = hmake V {x=0, y=0, z=0}
+
 -- local pwX, pwY, pwZ = 0, 0, 0
-local prwX, prwY, prwZ = 0, 0, 0
-local cPitch, cYaw, cRoll = 0, 0, 0
+local prwX : number, prwY : number, prwZ : number = 0, 0, 0
+-- local PRW = hmake V {x=0, y=0, z=0}
+local cPitch : number, cYaw : number, cRoll : number = 0, 0, 0
 
 local function UpdateVectors()
     Set3DRenderSpaceToCurrentCamera(MARKERS_CONTROL_2D_NAME)
@@ -215,10 +236,16 @@ local function UpdateVectors()
     fX, fY, fZ = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
     rX, rY, rZ = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
     uX, uY, uZ = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
+
+    -- C.x, C.y, C.z = GuiRender3DPositionToWorldPosition(MARKERS_CONTROL_2D:Get3DRenderSpaceOrigin()) -- RW
+    -- F.x, F.y, F.z = MARKERS_CONTROL_2D:Get3DRenderSpaceForward()
+    -- R.x, F.y, R.z = MARKERS_CONTROL_2D:Get3DRenderSpaceRight()
+    -- U.x, F.y, U.z = MARKERS_CONTROL_2D:Get3DRenderSpaceUp()
     -- TODO: normalize?
 
     -- _, pwX, pwY, pwZ = GetUnitWorldPosition('player')
     _, prwX, prwY, prwZ = GetUnitRawWorldPosition('player')
+    -- _, PRW.x, PRW.y, PRW.z = GetUnitRawWorldPosition('player')
 
     -- cPitch, cYaw, cRoll = MARKERS_CONTROL_2D:Get3DRenderSpaceOrientation()
 end
@@ -229,23 +256,26 @@ local Marker2D = LibImplex.class(Marker)
 local function _update2d(marker)
     local markerControl = _controls[marker]
 
-    local mX, mY, mZ = marker[1], marker[2], marker[3]
-    local dX, dY, dZ = mX - cX, mY - cY, mZ - cZ
+    -- local P : V = marker.position
+    -- local D : V = hmake V {x=P.x - C.x, y=P.y - C.y, z=P.z - C.z}
 
-    local Z = fX * dX + fY * dY + fZ * dZ
+    local pX : number, pY : number, pZ : number = marker.position.x, marker.position.y, marker.position.z
+    local dX : number, dY : number, dZ : number = pX - cX, pY - cY, pZ - cZ
+
+    -- local Z : number = F.x * D.x + F.y * D.y + F.z * D.z
+    local Z : number = fX * dX + fY * dY + fZ * dZ
     if Z < 0 then
         markerControl:SetHidden(true)
-        -- if not marker[4] then
-        --     markerControl:SetHidden(true)
-        --     marker[4] = true
-        -- end
         return
     end
 
     -- --------------------------------------------------------------------
 
-    local diffX, diffY, diffZ = prwX - mX, prwY - mY, prwZ - mZ
-    local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
+    -- local DIST : V = hmake V {x=PRW.x - P.x, y=PRW.y - P.y, z=PRW.z - P.z}
+
+    local diffX : number, diffY : number, diffZ : number = prwX - pX, prwY - pY, prwZ - pZ
+
+    local distance : number = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
     local updateFunctions = marker.updateFunctions
     for i = 1, #updateFunctions do
@@ -254,30 +284,24 @@ local function _update2d(marker)
 
     -- --------------------------------------------------------------------
 
-    -- local X = rX * dX + rZ * dZ  -- rY * dY can be ignored, rY = 0 because it is vector in XZ plane
-    -- local Y = uX * dX + uY * dY + uZ * dZ
+    -- local X : number = R.x * D.x + R.z * D.z  -- rY * dY can be ignored, rY = 0 because it is vector in XZ plane
+    -- local Y : number = U.x * D.x + U.y * D.y + U.z * D.z
+    local X : number = rX * dX + rZ * dZ  -- rY * dY can be ignored, rY = 0 because it is vector in XZ plane
+    local Y : number = uX * dX + uY * dY + uZ * dZ
 
-    local w, h = GetWorldDimensionsOfViewFrustumAtDepth(Z)
-    local offsetX, offsetY = (rX * dX + rZ * dZ) * UI_WIDTH / w, (uX * dX + uY * dY + uZ * dZ) * NEGATIVE_UI_HEIGHT / h
-    markerControl:SetAnchor(CENTER, GuiRoot, CENTER, offsetX, offsetY)
+    local w : number, h : number = GetWorldDimensionsOfViewFrustumAtDepth(Z)
+    local scaleW : number = UI_WIDTH / w
+    local scaleH : number = NEGATIVE_UI_HEIGHT / h
+
+    markerControl:SetAnchor(CENTER, GuiRoot, CENTER, X * scaleW, Y * scaleH)
 
     markerControl:SetDrawLevel(-Z)
-
-    marker[5], marker[6], marker[7] = offsetX, offsetY, -Z
-
     markerControl:SetHidden(false)
-    -- if marker[4] then
-    --     markerControl:SetHidden(false)
-    --     marker[4] = false
-    -- end
 end
 
 function Marker2D:__init(pool, position, orientation, texture, size, color, ...)
     self.base.__init(self, pool, position, orientation, texture, size, color, _update2d)
     self.updateFunctions = {...}
-
-    -- self.offsetX, self.offsetY = 0, 0
-    self[5], self[6] = 0, 0
 
     local control = _controls[self]
 
@@ -453,10 +477,14 @@ local function _update3d(marker)
     local diffX = prwX - x
     local diffY = prwY - y
     local diffZ = prwZ - z
+    -- local diffX = PRW.x - x
+    -- local diffY = PRW.y - y
+    -- local diffZ = PRW.z - z
     local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
 
     local updateFunctions = marker.updateFunctions
     for i = 1, #updateFunctions do
+        -- if updateFunctions[i](marker, distance, PRW.x, PRW.y, PRW.z, F.x, F.y, F.z, R.x, R.y, R.z, U.x, U.y, U.z) then return end
         if updateFunctions[i](marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
     end
 
@@ -469,8 +497,8 @@ local function _update3d(marker)
     --]]
 
     ---[[
-    local F = marker.F
-    local Fx, Fy, Fz = F[1], F[2], F[3]
+    local Fwd = marker.F
+    local Fx, Fy, Fz = Fwd[1], Fwd[2], Fwd[3]
 
     -- if cache[F] then
     --     markerControl:SetDrawLevel(cache[F])
@@ -493,9 +521,9 @@ local function _update3d(marker)
 
         local diX, diY, diZ = t * fX, t * fY, t * fZ
 
-        local D = diX * diX + diY * diY + diZ * diZ
+        local D_ = diX * diX + diY * diY + diZ * diZ
 
-        markerControl:SetDrawLevel(-D)
+        markerControl:SetDrawLevel(-D_)
         -- cache[F] = -D
     end
     --]]

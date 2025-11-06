@@ -8,6 +8,8 @@ local O = {0, 0, 0}
 local RED = {1, 0, 0}
 local GREEN = {0, 1, 0}
 local BLUE = {0, 0, 1}
+
+local DEPTH_BUFFER = true
 -- ----------------------------------------------------------------------------
 
 local function updateX(marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
@@ -39,9 +41,9 @@ end
 function LibImplex_ShowOrigin()
     DeleteOrigin()
 
-    ORIGIN[1] = originObjects._3D(O, {0, HALF_PI, -HALF_PI},  TEXTURE, SIZE, RED, updateX)
-    ORIGIN[2] = originObjects._3D(O, {0, 0, 0},               TEXTURE, SIZE, GREEN, updateY)
-    ORIGIN[3] = originObjects._3D(O, {HALF_PI, 0, 0},         TEXTURE, SIZE, BLUE, updateZ)
+    ORIGIN[1] = originObjects._3D(O, {0, HALF_PI, -HALF_PI, DEPTH_BUFFER},  TEXTURE, SIZE, RED, updateX)
+    ORIGIN[2] = originObjects._3D(O, {0, 0, 0, DEPTH_BUFFER},               TEXTURE, SIZE, GREEN, updateY)
+    ORIGIN[3] = originObjects._3D(O, {HALF_PI, 0, 0, DEPTH_BUFFER},         TEXTURE, SIZE, BLUE, updateZ)
 end
 
 LibImplex_HideOrigin = DeleteOrigin

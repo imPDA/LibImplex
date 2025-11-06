@@ -130,6 +130,8 @@ function Cube:SetColor(color)
     end
 end
 
+local IMP_CUBE
+
 local POSITION = LibImplex.Vector({5230, 13460, 155820})
 local function cubeExample()
     local cube = Cube(
@@ -137,7 +139,7 @@ local function cubeExample()
         {0, 0, 0},                      -- orientation {pitch, yaw, roll}
         1                               -- size in meters
     )
-    GLOBAL_IMP_CUBE = cube
+    IMP_CUBE = cube
 end
 
 
@@ -147,7 +149,9 @@ do
     local speed = 2 * PI / 5000
     local start = GetGameTimeMilliseconds()
     EVENT_MANAGER:RegisterForUpdate('LIB_IMPLEX_EXAMPLES_CUBE', nil, function()
-        local progress = ((GetGameTimeMilliseconds() - start) % 5000) * speed
-        GLOBAL_IMP_CUBE:Rotate(progress, progress, progress)
+        if IMP_CUBE then
+            local progress = ((GetGameTimeMilliseconds() - start) % 5000) * speed
+            IMP_CUBE:Rotate(progress, progress, progress)
+        end
     end)
 end

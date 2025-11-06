@@ -1,3 +1,6 @@
+V. 17
+- Fonts minimal refactoring and RU Univers67 font
+
 V. 16
 - Added Font class and monospace font for numbers (for BG timer)
 - Small changes in size calculations due to switching to Fonts

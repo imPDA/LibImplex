@@ -1,3 +1,6 @@
+local utf8len = utf8.len
+local utf8off = utf8.offset
+
 local Q = LibImplex.Q
 
 local writingContext = LibImplex.Marker('writing')
@@ -16,35 +19,35 @@ local BOTTOMRIGHT   = BOTTOMRIGHT
 
 local Font = LibImplex.class()
 
-function Font:__init(name, textureFileName, textureSize, coordinates)
+function Font:__init(name, ...)
     self.name = name
-    self.textureFileName = textureFileName
 
     self._coordinates = {}
+    self._paths = {}
     self._widthToHeight = {}
 
-    for letter, c in pairs(coordinates) do
-        self._coordinates[letter] = {
-            c[1] / textureSize,
-            c[2] / textureSize,
-            c[3] / textureSize,
-            c[4] / textureSize,
-        }
+    for _, language in pairs({...}) do
+        local textureSize = language.fullSize
+        local texturePath = language.path
 
-        self._widthToHeight[letter] = (c[2] - c[1]) / (c[4] - c[3])
+        for letter, c in pairs(language.characterCoordinates) do
+            self._coordinates[letter] = {
+                c[1] / textureSize,
+                c[2] / textureSize,
+                c[3] / textureSize,
+                c[4] / textureSize,
+            }
+            self._paths[letter] = texturePath
+            self._widthToHeight[letter] = (c[2] - c[1]) / (c[4] - c[3])
+        end
     end
 end
 
-function Font:GetCoordinates(letter)
-    return unpack(self._coordinates[letter])
+function Font:Get(letter, size)
+    return self._paths[letter], self._widthToHeight[letter] * size, size, unpack(self._coordinates[letter])
 end
-
-function Font:GetSizes(letter, size)
-    return self._widthToHeight[letter] * size, size
-end
-
-local Univers67 = Font('Univers 67', 'LibImplex/textures/univers67.dds', 1024, LibImplex.Textures.Alphabet.characterCoordinates)
-local _Monospace = Font('_Monospace', 'LibImplex/textures/univers67.dds', 1024, LibImplex.Textures.Alphabet.a)
+local Univers67 = Font('Univers 67', LibImplex.Textures.Alphabet.UNIVERS67.EN, LibImplex.Textures.Alphabet.UNIVERS67.RU)
+local _Monospace = Font('_Monospace', LibImplex.Textures.Alphabet.UNIVERS67.MONOSPACE)
 
 LibImplex.Fonts = {
     Univers67 = Univers67,
@@ -82,7 +85,57 @@ function Text:__init(text, anchorPoint, position, orientation, size, color, maxW
 end
 
 local LETTER_SPACING = 5
-local SPACE_WIDTH = 40
+local SPACE_WIDTH = 30
+
+-- local function splitToChars(word)
+--     local chars = {}
+
+--     local previousOffset = 1
+--     for i = 1, utf8len(word) do
+--         local offset = utf8off(word, i+1)
+--         local letter = word:sub(previousOffset, offset-1)
+--         previousOffset = offset
+--         chars[i] = letter
+--     end
+
+--     return chars
+-- end
+
+local function splitToChars(s)
+    local chars = {}
+    local i = 1
+    local len = #s
+
+    while i <= len do
+        local byte = s:byte(i)
+        local char_len = 1
+
+        if byte >= 0x00 and byte <= 0x7F then
+            char_len = 1
+        elseif byte >= 0xC2 and byte <= 0xDF then
+            char_len = 2
+        elseif byte >= 0xE0 and byte <= 0xEF then
+            char_len = 3
+        elseif byte >= 0xF0 and byte <= 0xF4 then
+            char_len = 4
+        end
+
+        if i + char_len - 1 > len then
+            char_len = 1
+        end
+
+        local char = s:sub(i, i + char_len - 1)
+        table.insert(chars, char)
+
+        i = i + char_len
+    end
+
+    -- d({s:byte(1, #s)})
+    -- d(chars)
+    -- d('------------')
+
+    return chars
+end
 
 function Text:SplitToRows()
     local spaceWidth = SPACE_WIDTH * self.size
@@ -93,48 +146,46 @@ function Text:SplitToRows()
     local splittedText = self.text:gmatch('([^\n]*)\n?')
 
     local currentRowWidth = 0
-    local currentRow = {}
-    local wordCounter = 0
+    local words = {}
 
     for textPart in splittedText do
-        for word in textPart:gmatch('%S+') do
-            local wordLength = #word
+        -- for word in textPart:gmatch('%S+') do
+        for word in textPart:gmatch('([^ ]+)') do
+            local chars = splitToChars(word)
+
+            local wordLength = #chars
             local wordWidth = 0
 
             for i = 1, wordLength do
-                local letter = word:sub(i, i)
-                local w, h = self.font:GetSizes(letter, self.size)
-
+                local texture, w, h, left, right, top, bottom = self.font:Get(chars[i], self.size)
                 wordWidth = wordWidth + w * 100
             end
 
             wordWidth = wordWidth + letterSpacing * (wordLength - 1)
 
             if self.maxWidth and (currentRowWidth + wordWidth + spaceWidth > self.maxWidth) then
-                if wordCounter > 0 then
-                    self.rows[#self.rows+1] = {table.concat(currentRow, ' ', 1, wordCounter), currentRowWidth}
-                    wordCounter = 1
-                    currentRow[wordCounter] = word
+                if #words > 0 then
+                    self.rows[#self.rows+1] = {words, currentRowWidth}
+
+                    words = {chars, }
                     currentRowWidth = wordWidth
                 else
-                    self.rows[#self.rows+1] = {word, wordWidth}
-                    wordCounter = 0
+                    self.rows[#self.rows+1] = {{chars}, wordWidth}
                     currentRowWidth = 0
                 end
             else
-                wordCounter = wordCounter + 1
-                currentRow[wordCounter] = word
+                words[#words+1] = chars
                 currentRowWidth = currentRowWidth + wordWidth
 
-                if wordCounter > 1 then
+                if #words > 1 then
                     currentRowWidth = currentRowWidth + spaceWidth
                 end
             end
         end
 
-        if wordCounter > 0 then
-            self.rows[#self.rows+1] = {table.concat(currentRow, ' ', 1, wordCounter), currentRowWidth}
-            wordCounter = 0
+        if #words > 0 then
+            self.rows[#self.rows+1] = {words, currentRowWidth}
+            words = {}
             currentRowWidth = 0
         end
     end
@@ -150,21 +201,19 @@ function Text:RenderRow(index, position)
     local r = self.R
 
     local cursor = position
-    local texture = self.font.textureFileName
 
     local objectFactory = self.objectFactory
     for i = 1, rowLength do
-        local letter = row:sub(i, i)
+        local word = row[i]
+        local wordLength = #word
 
-        if letter == ' ' then
-            cursor = cursor + r * spaceWidth
-        else
-            local w, h = self.font:GetSizes(letter, self.size)
+        for j = 1, wordLength do
+            local texture, w, h, left, right, top, bottom = self.font:Get(word[j], self.size)
 
             cursor = cursor + r * w * 50
 
             local letterObject = objectFactory(cursor, self.orientation, texture, {w, h}, self.color)
-            letterObject:SetTextureCoords(self.font:GetCoordinates(letter))
+            letterObject:SetTextureCoords(left, right, top, bottom)
             letterObject:SetDrawLevel(self.drawLevel)
             letterObject.width = w
             letterObject.height = h
@@ -174,11 +223,15 @@ function Text:RenderRow(index, position)
 
             cursor = cursor + r * w * 50
 
-            if i < rowLength then
+            if i < wordLength then
                 cursor = cursor + r * letterSpacing
             end
 
             self.objects[#self.objects+1] = letterObject
+        end
+
+        if i < rowLength then
+            cursor = cursor + r * spaceWidth
         end
     end
 end
