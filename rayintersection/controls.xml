@@ -15,10 +15,13 @@
                     <Anchor point="TOPLEFT" relativeTo="$(parent)Text" relativePoint="BOTTOMLEFT" />
                 </Label> -->
                 <Button name="$(parent)Measure" inherits="ZO_DefaultTextButton" font="$(BOLD_FONT)|$(KB_24)|soft-shadow-thin" text="Measure">
-                    <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOM" offsetX="-10" />
+                    <Anchor point="BOTTOMRIGHT" relativeTo="$(parent)" relativePoint="BOTTOM" offsetX="-15" />
+                </Button>
+                <Button name="$(parent)R" inherits="ZO_DefaultTextButton" font="$(BOLD_FONT)|$(KB_24)|soft-shadow-thin" text="R">
+                    <Anchor point="BOTTOM" relativeTo="$(parent)" relativePoint="BOTTOM" offsetX="0" />
                 </Button>
                 <Button name="$(parent)Clear" inherits="ZO_DefaultTextButton" font="$(BOLD_FONT)|$(KB_24)|soft-shadow-thin" text="Clear">
-                    <Anchor point="BOTTOMLEFT" relativeTo="$(parent)" relativePoint="BOTTOM" offsetX="10" />
+                    <Anchor point="BOTTOMLEFT" relativeTo="$(parent)" relativePoint="BOTTOM" offsetX="15" />
                 </Button>
             </Controls>
         </TopLevelControl>

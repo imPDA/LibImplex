@@ -1,4 +1,4 @@
-local cubeObjects = LibImplex.Marker('cubeExample')
+local cubeObjects = LibImplex.Objects('cubeExample')
 
 local Q = LibImplex.Q
 local Rotate = Q.RotateVectorByQuaternion

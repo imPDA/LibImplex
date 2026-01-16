@@ -1,49 +1,67 @@
-local originObjects = LibImplex.Marker('origin')
+local originObjects = LibImplex.Objects('origin')
+
+-- ----------------------------------------------------------------------------
+
 local TEXTURE = '/LibImplex/textures/arrow256x256.dds'
 
 local HALF_PI = math.pi * 0.5
-local SIZE = {1, 1.5}
-local O = {0, 0, 0}
+local W, H = 1, 1.5
 
-local RED = {1, 0, 0}
-local GREEN = {0, 1, 0}
-local BLUE = {0, 0, 1}
+local DEPTH_BUFFER = false
 
-local DEPTH_BUFFER = true
+local ORIENTATION = {
+    {0,         HALF_PI,    -HALF_PI},
+    {0,         0,          0},
+    {HALF_PI,   0,          0},
+}
+
+local COLOR = {
+    {1, 0, 0},
+    {0, 1, 0},
+    {0, 0, 1},
+}
+
+local SYSTEMS = {
+    {
+        LibImplex.Systems.FollowThePlayer(200, 100, 0)
+    },
+    {
+        LibImplex.Systems.Rotate3DWithCamera,
+        LibImplex.Systems.FollowThePlayer(0, 300, 0),
+    },
+    {
+        LibImplex.Systems.FollowThePlayer(0, 100, 200)
+    },
+}
+
 -- ----------------------------------------------------------------------------
 
-local function updateX(marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
-    marker:Move({prwX + 200, prwY + 100, prwZ})
-end
-
-local function updateY(marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
-    marker:Move({prwX, prwY + 300, prwZ})
-
-    marker.control:Set3DRenderSpaceForward(fX, fY, fZ)
-    marker.control:Set3DRenderSpaceRight(rX, rY, rZ)
-end
-
-local function updateZ(marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ)
-    marker:Move({prwX, prwY + 100, prwZ + 200})
-end
-
--- ----------------------------------------------------------------------------
-
-local ORIGIN = {}
+local objects = {}
 
 local function DeleteOrigin()
-    for i = 1, #ORIGIN do
-        ORIGIN[i]:Delete()
-        ORIGIN[i] = nil
+    for i = 1, #objects do
+        objects[i]:Delete()
+        objects[i] = nil
     end
 end
 
 function LibImplex_ShowOrigin()
     DeleteOrigin()
 
-    ORIGIN[1] = originObjects._3D(O, {0, HALF_PI, -HALF_PI, DEPTH_BUFFER},  TEXTURE, SIZE, RED, updateX)
-    ORIGIN[2] = originObjects._3D(O, {0, 0, 0, DEPTH_BUFFER},               TEXTURE, SIZE, GREEN, updateY)
-    ORIGIN[3] = originObjects._3D(O, {HALF_PI, 0, 0, DEPTH_BUFFER},         TEXTURE, SIZE, BLUE, updateZ)
+    for i = 1, 3 do
+        local originVector = originObjects._3D()
+        for _, system in ipairs(SYSTEMS[i]) do
+            originVector:AddSystem(system)
+        end
+        originVector:SetPosition(0, 0, 0)
+        originVector:SetOrientation(unpack(ORIENTATION[i]))
+        originVector:SetTexture(TEXTURE)
+        originVector:SetDimensions(W, H)
+        originVector:SetColor(unpack(COLOR[i]))
+        originVector:SetUseDepthBuffer(DEPTH_BUFFER)
+
+        objects[i] = originVector
+    end
 end
 
 LibImplex_HideOrigin = DeleteOrigin

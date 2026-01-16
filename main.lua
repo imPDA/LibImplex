@@ -23,7 +23,7 @@ lib.callbacks = {
 
 -- ----------------------------------------------------------------------------
 
-local function stats(tbl, length)
+local function calc_stats(tbl, length)
 	local total = 0
 	local max = 0
 	length = length or #tbl
@@ -40,13 +40,11 @@ local function stats(tbl, length)
 end
 
 function lib:OnPlayerActivated(initial)
-	local updateVectors = LibImplex.Marker.UpdateVectors
+	local updateVectors = LibImplex.UpdateVectors
 	local getUpdateableObjects = LibImplex.GetUpdateableObjects
-	-- local clearCache = LibImplex.ClearCache
 
 	local function updateMarkers()
 		self:FireCallbacks(EVENT_BEFORE_UPDATE)
-		-- clearCache()
 		updateVectors()
 
 		for object, _ in pairs(getUpdateableObjects()) do
@@ -81,8 +79,11 @@ function lib:OnPlayerActivated(initial)
 
 		EVENT_MANAGER:RegisterForUpdate(EVENT_NAMESPACE..'DebugWindow', 1000 * 1, function()
 			local repetitions = self.sv.repetitions
-			local avg, max = stats(updateArray, counter)
+			local avg, max = calc_stats(updateArray, counter)
+			local avgUnits, avgPrecision = 'ms', 3
 			local totalTime = avg * repetitions
+
+			local maxFps = 750 / avg
 
 			local stats = LibImplex.Context.GetContextStats()
 			local stats_table = {}
@@ -90,6 +91,11 @@ function lib:OnPlayerActivated(initial)
 				stats_table[#stats_table+1] = ('%s: %d / %d'):format(context, counts[1], counts[2])
 			end
 
+			if avg < 0.1 then
+				avg = avg * 1000
+				avgUnits = 'us'
+				avgPrecision = 1
+			end
 			LibImplex_DebugWindowText2:SetText(
 				(
 [[|c00EE00%dx|r repetition(s)
@@ -97,7 +103,7 @@ function lib:OnPlayerActivated(initial)
 Objects per context (active/total):
 %s
 
-Avg: %.3f ms (max: %.3f ms)
+Avg: |c00EE00%.]] .. avgPrecision .. [[f %s|r (max: %.3f ms)
 Total: %.3f ms
 Max FPS: ~%d (low: ~%d)
 Current FPS: ~%d (low: ~%d)]]
@@ -105,9 +111,9 @@ Current FPS: ~%d (low: ~%d)]]
 					repetitions,
 					table.concat(stats_table, '\n'),
 					avg,
+					avgUnits,
 					max,
-					totalTime,
-					750 / avg,
+					totalTime,maxFps,
 					750 / max,
 					750 / totalTime,
 					750 / (max * repetitions)
@@ -137,6 +143,8 @@ function lib:FireCallbacks(event)
 		callback()  -- TODO: pcall
 	end
 end
+
+-- ----------------------------------------------------------------------------
 
 function lib:AddSettings()
 	local LAM = LibAddonMenu2
@@ -193,6 +201,8 @@ end
 function lib:OnLoad()
 	self.sv = ZO_SavedVars:NewAccountWide('LibImplexSavedVariables', 1, nil, {
 		debugEnabled = false,
+		debugMinimized = true,
+		debugAnchorOffsets = {128, 20},
 		repetitions = 1,
 		devMode = false,
 	})
@@ -202,15 +212,18 @@ function lib:OnLoad()
 		self:AddSettings()
 
 		if self.sv.debugEnabled then
-			LibImplex_ShowDebugWindow()
+			LibImplex_ShowDebugWindow(self)
 			if self.sv.showOrigin then
 				LibImplex_ShowOrigin()
 			end
 		end
 	end
 
+	LibImplex.RegisterReticleOverEvents()
 	EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_PLAYER_ACTIVATED, function(_, initial) self:OnPlayerActivated(initial) end)
 end
+
+GLOBAL_LIB = lib
 
 EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_ADD_ON_LOADED, function(_, addonName)
 	if addonName ~= lib.name then return end

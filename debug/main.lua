@@ -1,16 +1,46 @@
 local TOP_LEVEL_CONTROL = LibImplex_DebugWindow
+local ZONE_INFO = TOP_LEVEL_CONTROL:GetNamedChild('ZoneInfo')
 local TEXT = TOP_LEVEL_CONTROL:GetNamedChild('Text')
 
-function LibImplex_ShowDebugWindow()
+local EVENT_NAMESPACE = 'IMP_LibImplex_Debug_EVENT_NAMESPACE'
+local LIB
+
+
+local function SetMinimized(toMinimize)
+    -- local parent = control:GetParent()
+    -- local isHidden = parent:GetNamedChild('Text'):IsHidden()
+
+    local parent = TOP_LEVEL_CONTROL
+
+    parent:GetNamedChild('Text'):SetHidden(toMinimize)
+    parent:GetNamedChild('Text2'):SetHidden(toMinimize)
+    parent:GetNamedChild('RenderWorldSwitch'):SetHidden(toMinimize)
+
+    if toMinimize then
+        parent:GetNamedChild('MinimizeButton'):SetText('|c00EE00[+]|r')
+    else
+        parent:GetNamedChild('MinimizeButton'):SetText('|cFF5C00[–]|r')
+    end
+end
+
+
+function LibImplex_ShowDebugWindow(addon)
+    LIB = addon
+
     TOP_LEVEL_CONTROL:SetHidden(false)
 
-    EVENT_MANAGER:RegisterForUpdate('LibImplex_DebugWindow_Update', 1000/60, function()
-        local text = ''
+    local offsetX, offsetY = unpack(addon.sv.debugAnchorOffsets)
+    -- local anchor = TOP_LEVEL_CONTROL:GetAnchor()
+    -- anchor:SetOffsetX(offsetX)
+    -- anchor:SetOffsetY(offsetY)
 
-        local zoneIndex = GetUnitZoneIndex('player')
-        local zoneName = GetZoneNameByIndex(zoneIndex)
-        local zoneId = GetZoneId(zoneIndex)
-        text = text .. ('%s (index: %d, ID: %d)\n'):format(zoneName, zoneIndex, zoneId)
+    -- df('Offsets: %.2f, %.2f', offsetX, offsetY)
+    TOP_LEVEL_CONTROL:SetAnchorOffsets(offsetX, offsetY, 1)
+
+    SetMinimized(addon.sv.debugMinimized)
+
+    EVENT_MANAGER:RegisterForUpdate(EVENT_NAMESPACE, 1000/60, function()
+        local text = ''
 
         local _, prX, prY, prZ = GetUnitRawWorldPosition('player')
         text = text .. ('GetUnitRawWorldPosition: {%d, %d, %d}\n'):format(prX, prY, prZ)
@@ -45,4 +75,25 @@ function LibImplex_ShowDebugWindow()
 
         TEXT:SetText(text)
     end)
+
+    EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_PLAYER_ACTIVATED, function()
+        local zoneIndex = GetUnitZoneIndex('player')
+        local zoneName = GetZoneNameByIndex(zoneIndex)
+        local zoneId = GetZoneId(zoneIndex)
+
+        ZONE_INFO:SetText(('|c00EE00%s|r (index: %d, ID: %d)\n'):format(zoneName:upper(), zoneIndex, zoneId))
+    end)
+end
+
+function IMP_LibImplex_ToggleMinimized(control)
+    local isHidden = control:GetParent():GetNamedChild('Text'):IsHidden()
+    SetMinimized(not isHidden)
+    LIB.sv.debugMinimized = not isHidden
+end
+
+function IMP_LibImplex_Debug_SaveOffsets()
+    local offsetX, offsetY = select(5, TOP_LEVEL_CONTROL:GetAnchor())
+    -- df('Offsets: %.2f, %.2f', offsetX, offsetY)
+
+    LIB.sv.debugAnchorOffsets = {offsetX, offsetY}
 end

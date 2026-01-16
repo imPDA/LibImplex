@@ -295,6 +295,88 @@ function Marker2D:Delete()
     updateableObjects[self] = nil
 end
 
+--- @class Marker2DWS : Marker
+local Marker2DWS = LibImplex.class(Marker)
+
+local function _update2dws(marker)
+    local markerControl = _controls[marker]
+
+    local mX, mY, mZ = marker[1], marker[2], marker[3]
+
+    local diffX, diffY, diffZ = prwX - mX, prwY - mY, prwZ - mZ
+    local distance = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ)
+
+    local updateFunctions = marker.updateFunctions
+    for i = 1, #updateFunctions do
+        if updateFunctions[i](marker, distance, prwX, prwY, prwZ, fX, fY, fZ, rX, rY, rZ, uX, uY, uZ) then return end
+    end
+
+    local dX, dY, dZ = mX - cX, mY - cY, mZ - cZ
+
+    -- local F = marker.F
+    -- local Fx, Fy, Fz = F[1], F[2], F[3]
+    local Fx, Fy, Fz = marker[8], marker[9], marker[10]
+
+    local numerator = Fx * dX + Fy * dY + Fz * dZ
+    local denominator = Fx * fX + Fy * fY + Fz * fZ
+
+    -- it is not entirely correct, parallel to the camera texture
+    -- should be treated as a special case and draw level
+    -- should be calculated other way
+    -- but this is "good enough (c)"
+    if denominator > 1e-6 and denominator < -1e-6 then
+        local t = numerator / denominator
+        -- if t < 0 then return end
+
+        local diX, diY, diZ = t * fX, t * fY, t * fZ
+        local D = diX * diX + diY * diY + diZ * diZ
+
+        markerControl:SetDrawLevel(-D)
+    end
+end
+
+function Marker2DWS:__init(pool, position, orientation, texture, size, color, ...)
+    self.base.__init(self, pool, position, orientation, texture, size, color, _update2dws)
+    self.updateFunctions = {...}
+
+    self[5], self[6] = 0, 0
+
+    local control = _controls[self]
+
+    control:SetTransformNormalizedOriginPoint(0.5, 0.5)
+    control:SetAnchor(CENTER, GuiRoot, CENTER)
+    control:SetSpace(SPACE_WORLD)
+
+    -- control:SetTransformScale(0.01)
+
+    local x, y, z = WorldPositionToGuiRender3DPosition(position[1], position[2], position[3])
+    control:SetTransformOffset(x, y, z)
+    control:SetTransformRotation(orientation[1], orientation[2], orientation[3])
+
+    if size then control:SetDimensions(unpack(size)) end
+
+    self.distanceLabel = control:GetNamedChild('DistanceLabel')
+
+    local q = Q.FromEuler(orientation[1], orientation[2], orientation[3])
+
+    local F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
+    local U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
+    local R = Q.RotateVectorByQuaternion({-1, 0, 0}, q)
+
+    self[ 8], self[ 9], self[10] = F[1], F[2], F[3]
+    self[11], self[12], self[13] = U[1], U[2], U[3]
+    self[14], self[15], self[16] = R[1], R[2], R[3]
+
+    updateableObjects[self] = true
+end
+
+function Marker2DWS:Delete()
+    Marker.Delete(self)
+    self.distanceLabel:SetHidden(true)
+
+    updateableObjects[self] = nil
+end
+
 --- @class Marker3DStatic : Marker
 local Marker3DStatic = LibImplex.class(Marker)
 
@@ -663,7 +745,7 @@ LibImplex.Context = {
     GetContextStats = getContextStats
 }
 
-LibImplex.ClearCache = ClearCache
+-- LibImplex.ClearCache = ClearCache
 
 LibImplex.Marker = {
     subclass = function() return LibImplex.class(Marker) end,
@@ -675,10 +757,12 @@ local DefaultMarkers = {
     Marker2D = Marker2D,
     Marker3D = Marker3D,
     Marker3DStatic = Marker3DStatic,
+    Marker2DWS = Marker2DWS,
 
     _2D = Marker2D,
     _3D = Marker3D,
     _3DStatic = Marker3DStatic,
+    _2DWS = Marker2DWS
 }
 
 local contextMeta = {

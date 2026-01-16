@@ -3,7 +3,7 @@ local utf8off = utf8.offset
 
 local Q = LibImplex.Q
 
-local writingContext = LibImplex.Marker('writing')
+local writingContext = LibImplex.Objects('writing')
 
 local TOPLEFT       = TOPLEFT
 local TOP           = TOP
@@ -76,11 +76,15 @@ function Text:__init(text, anchorPoint, position, orientation, size, color, maxW
     self.maxWidth = maxWidth
 
     self:Orient(orientation or {0, 0, 0})
+    self.useDepthBuffer = orientation[4]
 
     self.enableOutline = enableOutline
+    -- self.enableOutline = true
     self.outline = {}
 
-    self.objectFactory = objectFactory or StaticObject
+    -- self.objectFactory = objectFactory or StaticObject
+    self.objectFactory = objectFactory or Object
+    -- self.objectFactory = Object
     self.font = font or Univers67
 end
 
@@ -212,11 +216,18 @@ function Text:RenderRow(index, position)
 
             cursor = cursor + r * w * 50
 
-            local letterObject = objectFactory(cursor, self.orientation, texture, {w, h}, self.color)
-            letterObject:SetTextureCoords(left, right, top, bottom)
-            letterObject:SetDrawLevel(self.drawLevel)
-            letterObject.width = w
-            letterObject.height = h
+            -- local letterObject = objectFactory(cursor, self.orientation, texture, {w, h}, self.color)
+            local letterObject = objectFactory()
+            letterObject:SetPosition(unpack(cursor))
+            letterObject:SetOrientation(unpack(self.orientation))
+            letterObject:SetTexture(texture)
+            letterObject:SetDimensions(w, h)
+            letterObject:SetColor(unpack(self.color))
+            letterObject:SetUseDepthBuffer(self.useDepthBuffer)
+            letterObject.control:SetTextureCoords(left, right, top, bottom)
+            -- letterObject.control:SetDrawLevel(self.drawLevel)
+            -- letterObject.width = w
+            -- letterObject.height = h
 
             -- TODO: add function to draw normal for text object, not for each letter separately
             -- letterObject:DrawNormal(300)
@@ -286,10 +297,10 @@ function Text:Outline()
     local br = self:GetRelativePointCoordinates(BOTTOMRIGHT)
     local bl = self:GetRelativePointCoordinates(BOTTOMLEFT)
 
-    self.outline[1] = LibImplex.Lines.Line(tl, tr)
-    self.outline[2] = LibImplex.Lines.Line(tr, br)
-    self.outline[3] = LibImplex.Lines.Line(br, bl)
-    self.outline[4] = LibImplex.Lines.Line(bl, tl)
+    self.outline[1] = LibImplex.Lines.Line(tl[1], tl[2], tl[3], tr[1], tr[2], tr[3])
+    self.outline[2] = LibImplex.Lines.Line(tr[1], tr[2], tr[3], br[1], br[2], br[3])
+    self.outline[3] = LibImplex.Lines.Line(br[1], br[2], br[3], bl[1], bl[2], bl[3])
+    self.outline[4] = LibImplex.Lines.Line(bl[1], bl[2], bl[3], tl[1], tl[2], tl[3])
 end
 
 function Text:RemoveOutline()
@@ -328,7 +339,8 @@ end
 
 function Text:Orient(orientation)
     -- TODO: recheck if I can do something with it
-    self.orientation = {orientation[3], orientation[2], orientation[1], orientation[4]}
+    -- self.orientation = {orientation[3], orientation[2], orientation[1], orientation[4]}
+    self.orientation = {orientation[3], orientation[2], orientation[1]}
 
     local q = Q.FromEuler(unpack(self.orientation))
 

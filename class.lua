@@ -21,11 +21,11 @@ local function class(base)
 
         while mt do
             if mt == cls then return true end
-            if mt.base then
-                mt = mt.base
-            else
-                mt = nil
-            end
+            -- if mt.base then
+            --     mt = mt.base
+            -- else
+            --     mt = nil
+            -- end
         end
 
         return false

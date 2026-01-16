@@ -9,7 +9,7 @@ local function followAbovePlayer(marker, distance, prwX, prwY, prwZ, fX, fY, fZ,
 end
 
 local function activateCircle()
-    LibImplex.Marker()._3D(
+    LibImplex.Objects()._3D(
         {0, 0, 0},  -- position (does not matter now, position will be updated every frame)
         {math.pi / 2, 0, 0, true},  -- rotate to make horizontal
         TEXTURE,  -- texture filename
@@ -18,7 +18,7 @@ local function activateCircle()
         followPlayer  -- special function to follow player position
     )
 
-    LibImplex.Marker._3D(
+    LibImplex.Objects._3D(
         {0, 0, 0},
         {math.pi / 2, 0, 0, true},
         TEXTURE,

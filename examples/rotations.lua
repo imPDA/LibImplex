@@ -4,7 +4,7 @@ local Q = LibImplex.Q
 local PI = math.pi
 local ABS = math.abs
 
-local fives = LibImplex.Marker('rotationsExample')
+local fives = LibImplex.Objects('rotationsExample')
 
 local T = 'LibImplex/textures/five.dds'
 local S = {1.5, 1.5}

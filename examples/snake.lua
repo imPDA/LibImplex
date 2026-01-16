@@ -1,8 +1,16 @@
-local snakeObjects = LibImplex.Marker('snakeExample')
+local snakeObjects = LibImplex.Objects('snakeExample')
 
 local Q = LibImplex.Q
-local Rotate = Q.RotateVectorByQuaternion
 local HALF_PI = math.pi * 0.5
+local PI = math.pi
+
+-- ----------------------------------------------------------------------------
+
+local LightPosition = LibImplex.Vector({5270, 13500+3000, 155120})
+local RoomCenter = LibImplex.Vector({5270, 13500, 155120})
+
+local SHINESS = 16
+local BP = LibImplex.Systems.Lighting2(LightPosition, SHINESS, 0.1)
 
 -- ----------------------------------------------------------------------------
 
@@ -12,99 +20,104 @@ function Cube:__init(position, orientation, size, color)
     self.position = LibImplex.Vector(position)
     self.orientation = orientation
 
-    self.orientation[4] = true
+    -- self.orientation[4] = true
 
     self.size = size
-    self.color = color
+    self.color = LibImplex.Vector(color)
 
     self.Q = Q.FromEuler(unpack(orientation))
 
-    self.upOrientation = {Q.ToEuler(Q.FromEuler(HALF_PI, 0, 0) * self.Q)}
-    self.rightOrientation = {Q.ToEuler(Q.FromEuler(0, HALF_PI, 0) * self.Q)}
+    self.top = {Q.ToEuler(Q.FromEuler(-HALF_PI, 0, 0) * self.Q)}
+    self.bottom = {Q.ToEuler(Q.FromEuler(HALF_PI, 0, 0) * self.Q)}
+    self.right = {Q.ToEuler(Q.FromEuler(0, HALF_PI, 0) * self.Q)}
+    self.left = {Q.ToEuler(Q.FromEuler(0, -HALF_PI, 0) * self.Q)}
+    self.front = orientation
+    self.back = {Q.ToEuler(Q.FromEuler(0, PI, 0) * self.Q)}
 
-    self.upOrientation[4] = true
-    self.rightOrientation[4] = true
+    self.F = self.Q:Rotate({0, 0, 1})
+    self.U = self.Q:Rotate({0, 1, 0})
+    self.R = self.Q:Rotate({1, 0, 0})
 
-    self.F = Rotate({0, 0, 1}, self.Q)
-    self.U = Rotate({0, 1, 0}, self.Q)
-    self.R = Rotate({1, 0, 0}, self.Q)
-
-    self.objects = {}
+    self.faces = {}
     self:Draw()
 end
 
+local FRU = {
+    { 1,  0,  0},
+    {-1,  0,  0},
+    { 0,  1,  0},
+    { 0, -1,  0},
+    { 0,  0,  1},
+    { 0,  0, -1},
+}
+
+local ORIENTATION = {
+    'front',
+    'back',
+    'right',
+    'left',
+    'top',
+    'bottom',
+}
+
 function Cube:Draw()
     local halfSize = self.size * 0.5 * 100
+    local position = self.position
+    local F = self.F
+    local R = self.R
+    local U = self.U
 
-    self.objects[1] = snakeObjects._3D(
-        self.position + self.F * halfSize,
-        self.orientation,
-        nil,
-        {self.size, self.size},
-        {0, 1, 0}
-    )
+    for i = 1, 6 do
+        local face = snakeObjects._3D()
+        local f, r, u = unpack(FRU[i])
 
-    self.objects[2] = snakeObjects._3D(
-        self.position - self.F * halfSize,
-        self.orientation,
-        nil,
-        {self.size, self.size},
-        self.color
-    )
+        face:SetPosition(unpack(position + F * halfSize * f + R * halfSize * r + U * halfSize * u))
+        face:SetOrientation(unpack(self[ORIENTATION[i]]))
+        face:SetDimensions(self.size, self.size)
 
-    self.objects[3] = snakeObjects._3D(
-        self.position + self.U * halfSize,
-        self.upOrientation,
-        nil,
-        {self.size, self.size},
-        {0, 1, 0}
-    )
+        -- local N = LibImplex.Vector({wall[ 8], wall[ 9], wall[10]})
+        -- local P = LibImplex.Vector({wall[ 1], wall[ 2], wall[ 3]})
+        -- local L = (LightPosition - P):unit()
+        -- local theta = math.max(0, L:dot(N))  -- Lambertian
 
-    self.objects[4] = snakeObjects._3D(
-        self.position - self.U * halfSize,
-        self.upOrientation,
-        nil,
-        {self.size, self.size},
-        self.color
-    )
+        -- wall:SetColor(unpack(self.color * theta))
+        face:SetColor(unpack(self.color))
 
-    self.objects[5] = snakeObjects._3D(
-        self.position + self.R * halfSize,
-        self.rightOrientation,
-        nil,
-        {self.size, self.size},
-        {0, 1, 0}
-    )
+        face:SetUseDepthBuffer(true)
+        face:AddSystem(BP)
+        face:AddSystem(LibImplex.Systems.BackFaceCulling)
 
-    self.objects[6] = snakeObjects._3D(
-        self.position - self.R * halfSize,
-        self.rightOrientation,
-        nil,
-        {self.size, self.size},
-        self.color
-    )
+        if i <= 4 then
+            face.control:SetVertexUV(VERTEX_POINTS_TOPLEFT, 0.0, 1.0)
+            face.control:SetVertexUV(VERTEX_POINTS_TOPRIGHT, 1.0, 1.0)
+            face.control:SetVertexUV(VERTEX_POINTS_BOTTOMLEFT, 0.0, 0.3)
+            face.control:SetVertexUV(VERTEX_POINTS_BOTTOMRIGHT, 1.0, 0.3)
+        end
+
+        self.faces[i] = face
+    end
 
     -- self:DrawNormals()
 end
 
 function Cube:DrawNormals()
-    for i = 1, #self.objects do
-        self.objects[i]:DrawNormal()
+    for i = 1, #self.faces do
+        self.faces[i]:DrawNormal(10)
     end
 end
 
 function Cube:Clear()
-    for i = 1, #self.objects do
-        self.objects[i]:Delete()
-        self.objects[i] = nil
+    for i = 1, #self.faces do
+        self.faces[i]:Delete()
+        self.faces[i] = nil
     end
 end
 
 function Cube:SetColor(color)
     self.color = color
 
-    for i = 1, #self.objects do
-        self.objects[i]:SetColor(unpack(color))
+    for i = 1, #self.faces do
+        self.faces[i]:SetColor(unpack(color))
     end
 end
 
@@ -150,7 +163,32 @@ local function snakeExample()
         )
     end
 
-    body[1]:SetColor({50 / 255, 150 / 255, 0})
+    -- body[1]:SetColor(50 / 255, 150 / 255, 0)
+
+    local lightSource = snakeObjects._2D()
+    lightSource:SetPosition(unpack(LightPosition))
+    lightSource:SetTexture('/esoui/art/miscellaneous/gamepad/gp_bullet.dds')
+    lightSource:SetDimensions(32, 32)
+
+    -- local direction = -1
+    -- local speed = 100 / 100  -- cm / ms
+    -- EVENT_MANAGER:RegisterForUpdate('IMP_SNAKE_EVENT_NAMESPACE', 0, function()
+    --     if LightPosition[2] < 13500 - 3000 or LightPosition[2] > 13500 + 3000 then
+    --         direction = direction * -1
+    --     end
+    --     LightPosition[2] = LightPosition[2] + direction * GetFrameDeltaMilliseconds() * speed
+    --     lightSource:SetPosition(unpack(LightPosition))
+    -- end)
+
+    local phi = 0
+    local speed = PI / 2 / 3000  -- rad / ms
+    local RADIUS = 3000
+    EVENT_MANAGER:RegisterForUpdate('IMP_SNAKE_EVENT_NAMESPACE', 0, function()
+        phi = phi + GetFrameDeltaMilliseconds() * speed
+        LightPosition[1] = RoomCenter[1] + RADIUS * math.cos(phi)
+        LightPosition[2] = RoomCenter[2] + RADIUS * math.sin(phi)
+        lightSource:SetPosition(unpack(LightPosition))
+    end)
 end
 
 
