@@ -1,7 +1,7 @@
 ## Title: |cAFD3FFLibImplex|r
 ## Description: Simple (hope so) marker "engine"
 ## Author: |c7c42f2imPDA|r
-## AddOnVersion: 18
+## AddOnVersion: 19
 ## APIVersion: 101048
 ## IsLibrary: true
 ## SavedVariables: LibImplexSavedVariables
@@ -29,8 +29,8 @@ debug/main.lua
 textures.lua
 writing.lua
 
-rayintersection/controls.xml
-rayintersection/main.lua
+; rayintersection/controls.xml
+; rayintersection/main.lua
 
 ; examples/groundmarkers.lua
 ; examples/circle.lua

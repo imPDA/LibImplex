@@ -1,3 +1,6 @@
+V. 19
+- `rayintersection` should be now correctly turned off
+
 V. 18
 - Complete rework
 
