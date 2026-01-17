@@ -172,11 +172,16 @@ end
 
 function Entity:_rebuildUpdate()
     local systems = self.systems
+    local updateFunctions = self.updateFunctions
     tbl_sort(systems, sortByPriority)
+
+    for i = 1, #updateFunctions do
+        updateFunctions[i] = nil
+    end
 
     for i = 1, #systems do
         local system_ = systems[i]
-        self.updateFunctions[i] = system_[SYSTEM_CALLBACK]
+        updateFunctions[i] = system_[SYSTEM_CALLBACK]
         -- self[ENTITY_UPDATE_FUNCTIONS][i] = system_[SYSTEM_CALLBACK]
         self.registry[system_[SYSTEM_ID]] = i
     end
@@ -208,10 +213,11 @@ function Entity:RemoveSystem(system)
     local index = self.registry[id]
 
     if index then
-        tbl_remove(self.systems[index])
-        tbl_remove(self.updateFunctions[index])
+        tbl_remove(self.systems, index)
+        tbl_remove(self.updateFunctions, index)
         -- tbl_remove(self[ENTITY_UPDATE_FUNCTIONS][index])
         self.registry[id] = nil
+        self:_rebuildUpdate()
     end
 
     local onRemove = system[5]
