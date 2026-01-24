@@ -1,5 +1,8 @@
+V. 22
+- Hotfix for `ZO_HUDFadeSceneFragment` error
+
 V. 21
-- New `DepthBuffer` RemoveSystem
+- New `DepthBuffer` system
 - Second canvas to split some objects to alternate behaviour
 - Setting to hide objects while not in HUD UI
 

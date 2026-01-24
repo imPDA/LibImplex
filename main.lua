@@ -253,12 +253,12 @@ function lib:OnLoad()
 
 	-- TODO: do not update if scene is different (small impact	)
 	if sv.hudOnly then
-		local canvasFargment = ZO_FadeSceneFragment:New(IMP_LibImplex_Canvas)
+		local canvasFargment = ZO_HUDFadeSceneFragment:New(IMP_LibImplex_Canvas)
 		HUD_SCENE:AddFragment(canvasFargment)  -- TODO: HUD_UI_SCENE?
 
 		-- TODO: detect setting change on the fly
 		if GetSetting(SETTING_TYPE_GRAPHICS, GRAPHICS_SETTING_SUB_SAMPLING) ~= '2' then
-			local secondCanvasFargment = ZO_FadeSceneFragment:New(IMP_LibImplex_SecondCanvas)
+			local secondCanvasFargment = ZO_HUDFadeSceneFragment:New(IMP_LibImplex_SecondCanvas)
 			HUD_SCENE:AddFragment(secondCanvasFargment)  -- TODO: HUD_UI_SCENE?
 		end
 	end
@@ -266,8 +266,6 @@ function lib:OnLoad()
 	LibImplex.RegisterReticleOverEvents()
 	EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_PLAYER_ACTIVATED, function(_, initial) self:OnPlayerActivated(initial) end)
 end
-
-GLOBAL_LIB = lib
 
 EVENT_MANAGER:RegisterForEvent(EVENT_NAMESPACE, EVENT_ADD_ON_LOADED, function(_, addonName)
 	if addonName ~= lib.name then return end
