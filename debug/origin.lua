@@ -58,7 +58,7 @@ function LibImplex_ShowOrigin()
         originVector:SetTexture(TEXTURE)
         originVector:SetDimensions(W, H)
         originVector:SetColor(unpack(COLOR[i]))
-        originVector:SetUseDepthBuffer(DEPTH_BUFFER)
+        originVector:AddSystem(LibImplex.Systems.DepthBuffer)
 
         objects[i] = originVector
     end

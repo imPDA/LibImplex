@@ -154,6 +154,34 @@ function lib:AddSettings()
 	local panelName = self.name .. 'SettingsPanelControl'
 	local panelData = {
         type = 'panel',
+        name = self.displayName,
+        author = '@imPDA',
+    }
+
+    local panel = LAM:RegisterAddonPanel(panelName, panelData)
+
+    local optionsData = {
+		{
+			type = 'checkbox',
+			name = 'Show on HUD scene only',
+			tooltip = 'All objects/markers will be displayed on HUD UI scene only and hidden on all other scenes (inventory, map, menu, etc.)',
+			getFunc = function() return self.sv.hudOnly end,
+			setFunc = function(value) self.sv.hudOnly = value end,
+			requiresReload = true,
+		}
+    }
+
+    LAM:RegisterOptionControls(panelName, optionsData)
+end
+
+function lib:AddDebugSettings()
+	local LAM = LibAddonMenu2
+
+	if not LAM then return end
+
+	local panelName = self.name .. 'DebugSettingsPanelControl'
+	local panelData = {
+        type = 'panel',
         name = '[DEV] '..self.displayName,
         author = '@imPDA',
     }
@@ -199,23 +227,39 @@ function lib:AddSettings()
 end
 
 function lib:OnLoad()
-	self.sv = ZO_SavedVars:NewAccountWide('LibImplexSavedVariables', 1, nil, {
+	local sv = ZO_SavedVars:NewAccountWide('LibImplexSavedVariables', 1, nil, {
 		debugEnabled = false,
 		debugMinimized = true,
 		debugAnchorOffsets = {128, 20},
 		repetitions = 1,
 		devMode = false,
+		hudOnly = true,
 	})
+	self.sv = sv
 
-	if self.sv.devMode then
+	if sv.devMode then
 		SLASH_COMMANDS['/r'] = SLASH_COMMANDS['/reloadui']
-		self:AddSettings()
+		self:AddDebugSettings()
 
-		if self.sv.debugEnabled then
+		if sv.debugEnabled then
 			LibImplex_ShowDebugWindow(self)
-			if self.sv.showOrigin then
+			if sv.showOrigin then
 				LibImplex_ShowOrigin()
 			end
+		end
+	end
+
+	self:AddSettings()
+
+	-- TODO: do not update if scene is different (small impact	)
+	if sv.hudOnly then
+		local canvasFargment = ZO_FadeSceneFragment:New(IMP_LibImplex_Canvas)
+		HUD_SCENE:AddFragment(canvasFargment)  -- TODO: HUD_UI_SCENE?
+
+		-- TODO: detect setting change on the fly
+		if GetSetting(SETTING_TYPE_GRAPHICS, GRAPHICS_SETTING_SUB_SAMPLING) ~= '2' then
+			local secondCanvasFargment = ZO_FadeSceneFragment:New(IMP_LibImplex_SecondCanvas)
+			HUD_SCENE:AddFragment(secondCanvasFargment)  -- TODO: HUD_UI_SCENE?
 		end
 	end
 

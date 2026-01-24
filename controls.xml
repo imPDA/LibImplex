@@ -1,7 +1,8 @@
 <GuiXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sir.insidi.at/or/schema/esoui.xsd">
 	<Controls>
 		<TopLevelControl name="LibImplex_MarkersControl" layer="0" level="0" />
-		<TopLevelControl name="IMP_LibImplex_Canvas" />  <!-- layer="0" level="0"> -->
+		<TopLevelControl name="IMP_LibImplex_Canvas" layer="0" level="0" />  <!-- layer="0" level="0"> -->
+		<TopLevelControl name="IMP_LibImplex_SecondCanvas" layer="0" level="0" />  <!-- layer="0" level="0"> -->
 
 		<TopLevelControl name="LibImplex_2DMarkers" layer="0" level="0">
             <AnchorFill />

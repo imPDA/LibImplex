@@ -43,6 +43,7 @@ end
 -- ----------------------------------------------------------------------------
 
 local CANVAS = IMP_LibImplex_Canvas
+local SECOND_CANVAS = IMP_LibImplex_SecondCanvas
 local OBJECT_TEMPLATE_NAME = 'IMP_LibImplex_ObjectTemplate'
 
 -- ----------------------------------------------------------------------------
@@ -50,9 +51,12 @@ local OBJECT_TEMPLATE_NAME = 'IMP_LibImplex_ObjectTemplate'
 local pools = {}
 
 local function createNewPool(context, objectTemplateName, prefix)
+    prefix = prefix or 'Object'
+    objectTemplateName = objectTemplateName or OBJECT_TEMPLATE_NAME
+
     if not pools[context] then
         local function factoryFunction(objectPool)
-            local object = ZO_ObjectPool_CreateNamedControl(('$(parent)_%s_%s'):format(context, prefix or 'Object'), objectTemplateName or OBJECT_TEMPLATE_NAME, objectPool, CANVAS)
+            local object = ZO_ObjectPool_CreateNamedControl(('$(parent)_%s_%s'):format(context, prefix), objectTemplateName, objectPool, CANVAS)
             assert(object ~= nil, 'Control was not created!')
 
             return object
@@ -181,9 +185,13 @@ function Entity:_rebuildUpdate()
 
     for i = 1, #systems do
         local system_ = systems[i]
-        updateFunctions[i] = system_[SYSTEM_CALLBACK]
-        -- self[ENTITY_UPDATE_FUNCTIONS][i] = system_[SYSTEM_CALLBACK]
-        self.registry[system_[SYSTEM_ID]] = i
+        local updateFunction = system_[SYSTEM_CALLBACK]
+        if updateFunction then
+            local nextIndex = #updateFunctions + 1
+            updateFunctions[nextIndex] = updateFunction
+            -- self[ENTITY_UPDATE_FUNCTIONS][nextIndex] = system_[SYSTEM_CALLBACK]
+            self.registry[system_[SYSTEM_ID]] = nextIndex
+        end
     end
 end
 
@@ -718,10 +726,6 @@ function Object3DStatic:SetColor(r, g, b, a)
     self.color = {r, g, b, a}
 end
 
-function Object3DStatic:SetUseDepthBuffer(useDepthBuffer)
-    _controls[self]:Set3DRenderSpaceUsesDepthBuffer(useDepthBuffer)
-end
-
 function Object3DStatic:DrawNormal(length)
     -- TODO: optimize
     local P = Vector({self[ 1], self[ 2], self[ 3]})
@@ -1003,6 +1007,22 @@ end
 --     )
 -- end
 
+local DepthBuffer = System(
+    'depthBuffer',
+    nil,
+    LOWEST_PRIORITY,
+    function(e)
+        local control = _controls[e]
+        control:SetParent(SECOND_CANVAS)
+        control:Set3DRenderSpaceUsesDepthBuffer(true)
+    end,
+    function(e)
+        local control = _controls[e]
+        control:SetParent(CANVAS)
+        control:Set3DRenderSpaceUsesDepthBuffer(false)
+    end
+)
+
 -- ----------------------------------------------------------------------------
 
 LibImplex = LibImplex or {}
@@ -1094,6 +1114,7 @@ LibImplex.Systems = {
     Rotate3DWithCamera = Rotate3DWithCamera,
     Lighting2 = Lighting2,
     BackFaceCulling = BackFaceCulling,
+    DepthBuffer = DepthBuffer,
 }
 
 LibImplex.RegisterReticleOverEvents = registerReticleOverEvents

@@ -70,7 +70,7 @@ function Text:__init(text, anchorPoint, position, orientation, size, color, maxW
     self.objects = {}
 
     self.anchorPoint = anchorPoint or TOPLEFT
-    self.position = position or {select(2, GetUnitRawWorldPosition('player'))}
+    self.position = position or {select(2, GetUnitRawWorldPosition('player'))}  -- TODO: use 3 numbers instead of tables
     self.size = size or 1
     self.color = color or {1, 1, 1}
     self.maxWidth = maxWidth
@@ -223,7 +223,7 @@ function Text:RenderRow(index, position)
             letterObject:SetTexture(texture)
             letterObject:SetDimensions(w, h)
             letterObject:SetColor(unpack(self.color))
-            letterObject:SetUseDepthBuffer(self.useDepthBuffer)
+            letterObject:AddSystem(LibImplex.Systems.DepthBuffer)
             letterObject.control:SetTextureCoords(left, right, top, bottom)
             -- letterObject.control:SetDrawLevel(self.drawLevel)
             -- letterObject.width = w
@@ -435,7 +435,7 @@ function Text:GetRelativePointCoordinates(anchorPoint, offsetRight, offsetUp, of
     local totalRight = (targetRight - baseRight) * width + offsetRight
     local totalUp = (targetUp - baseUp) * height + offsetUp
 
-    return self.position + self.R * totalRight + self.U * totalUp + self.F * offsetForward
+    return unpack(self.position + self.R * totalRight + self.U * totalUp + self.F * offsetForward)
 end
 
 Text.Delete = Text.Wipe

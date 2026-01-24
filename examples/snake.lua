@@ -83,7 +83,7 @@ function Cube:Draw()
         -- wall:SetColor(unpack(self.color * theta))
         face:SetColor(unpack(self.color))
 
-        face:SetUseDepthBuffer(true)
+        face:AddSystem(LibImplex.Systems.DepthBuffer)
         face:AddSystem(BP)
         face:AddSystem(LibImplex.Systems.BackFaceCulling)
 
