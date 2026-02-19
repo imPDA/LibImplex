@@ -1,6 +1,6 @@
 <GuiXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sir.insidi.at/or/schema/esoui.xsd">
 	<Controls>
-        <TopLevelControl name="LibImplex_RayIntersection" resizeToFitDescendents="true" mouseEnabled="true" movable="true" hidden="false">
+        <TopLevelControl name="LibImplex_RayIntersection" resizeToFitDescendents="true" mouseEnabled="true" movable="true" hidden="true">
             <Dimensions x="270" y="100" />
             <Anchor point="LEFT" relativePoint="CENTER" offsetX="150" />
             <Controls>

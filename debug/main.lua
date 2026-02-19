@@ -81,7 +81,7 @@ function LibImplex_ShowDebugWindow(addon)
         local zoneName = GetZoneNameByIndex(zoneIndex)
         local zoneId = GetZoneId(zoneIndex)
 
-        ZONE_INFO:SetText(('|c00EE00%s|r (index: %d, ID: %d)\n'):format(zoneName:upper(), zoneIndex, zoneId))
+        ZONE_INFO:SetText(('|c00EE00%s|r (index: %d, ID: %d, subZoneId: %s)\n'):format(zoneName:upper(), zoneIndex, zoneId, IMP_GetCurrentSubzoneId() or '?'))
     end)
 end
 

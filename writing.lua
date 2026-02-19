@@ -292,15 +292,15 @@ end
 function Text:Outline()
     self:RemoveOutline()
 
-    local tl = self:GetRelativePointCoordinates(TOPLEFT)
-    local tr = self:GetRelativePointCoordinates(TOPRIGHT)
-    local br = self:GetRelativePointCoordinates(BOTTOMRIGHT)
-    local bl = self:GetRelativePointCoordinates(BOTTOMLEFT)
+    local tlX, tlY, tlZ = self:GetRelativePointCoordinates(TOPLEFT)
+    local trX, trY, trZ = self:GetRelativePointCoordinates(TOPRIGHT)
+    local brX, brY, brZ = self:GetRelativePointCoordinates(BOTTOMRIGHT)
+    local blX, blY, blZ = self:GetRelativePointCoordinates(BOTTOMLEFT)
 
-    self.outline[1] = LibImplex.Lines.Line(tl[1], tl[2], tl[3], tr[1], tr[2], tr[3])
-    self.outline[2] = LibImplex.Lines.Line(tr[1], tr[2], tr[3], br[1], br[2], br[3])
-    self.outline[3] = LibImplex.Lines.Line(br[1], br[2], br[3], bl[1], bl[2], bl[3])
-    self.outline[4] = LibImplex.Lines.Line(bl[1], bl[2], bl[3], tl[1], tl[2], tl[3])
+    self.outline[1] = LibImplex.Lines.Line(tlX, tlY, tlZ, trX, trY, trZ)
+    self.outline[2] = LibImplex.Lines.Line(trX, trY, trZ, brX, brY, brZ)
+    self.outline[3] = LibImplex.Lines.Line(brX, brY, brZ, blX, blY, blZ)
+    self.outline[4] = LibImplex.Lines.Line(blX, blY, blZ, tlX, tlY, tlZ)
 end
 
 function Text:RemoveOutline()

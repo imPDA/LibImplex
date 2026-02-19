@@ -141,8 +141,6 @@ function Entity:__init(pool, ...)
         self.control = control
     end
 
-    -- TODO: :SetColor
-
     self.updateFunctions = {}
     self[ENTITY_UPDATE_FUNCTIONS] = {}
 
@@ -153,6 +151,20 @@ end
 
 local function sortByPriority(left, right)
     return left[SYSTEM_PRIORITY] < right[SYSTEM_PRIORITY]
+end
+
+local function conditionalPrioritySorting(systems)
+    local function inner(left, right)
+        local PL = left[SYSTEM_PRIORITY]
+        local PR = right[SYSTEM_PRIORITY]
+
+        if type(PL) == 'function' then PL = PL(systems) end
+        if type(PR) == 'function' then PR = PR(systems) end
+
+        return PL < PR
+    end
+
+    return inner
 end
 
 function Entity:_addSystem(system)
@@ -177,7 +189,7 @@ end
 function Entity:_rebuildUpdate()
     local systems = self.systems
     local updateFunctions = self.updateFunctions
-    tbl_sort(systems, sortByPriority)
+    tbl_sort(systems, conditionalPrioritySorting(systems))
 
     for i = 1, #updateFunctions do
         updateFunctions[i] = nil
@@ -199,6 +211,8 @@ function Entity:AddSystem(system)
     if self:_addSystem(system) then
         self:_rebuildUpdate()
     end
+
+    return self
 end
 
 function Entity:AddSystems(...)
@@ -214,6 +228,8 @@ function Entity:AddSystems(...)
     if atLeastOneSystemAdded then
         self:_rebuildUpdate()
     end
+
+    return self
 end
 
 function Entity:RemoveSystem(system)
@@ -243,6 +259,13 @@ end
 
 function Entity:Delete()
     self.pool:ReleaseObject(self.objectKey)
+end
+
+function Entity:SetColor(r, g, b, a)
+    _controls[self]:SetColor(r, g, b, a)
+    self.color = {r, g, b, a}
+
+    return self
 end
 
 -- ----------------------------------------------------------------------------
@@ -374,6 +397,7 @@ local UpdateDistanceLabel = System(
     end
 )
 
+local PRIORITY_FILTER_BY_DISTANCE = HIGHEST_PRIORITY - 1
 local FilterByDistance = function(minDistance, maxDistance)
     local minDistance_sq = minDistance * minDistance * 10000
     local maxDistance_sq = maxDistance * maxDistance * 10000
@@ -390,8 +414,7 @@ local FilterByDistance = function(minDistance, maxDistance)
                 return true
             end
         end,
-        HIGHEST_PRIORITY - 1,
-        -- HIGHEST_PRIORITY + 1,
+        PRIORITY_FILTER_BY_DISTANCE,
         nil,
         function(entity)
             _controls[entity]:SetHidden(false)
@@ -426,59 +449,56 @@ local ChangeAlphaWithDistance = function(distance1, alpha1, distance2, alpha2)
     )
 end
 
-local reticle_over = nil
+local reticleOverEntity, reticleOverCB, reticleOverLabel = nil, nil, nil
 local RETICLE_OVER_MIN_DISTANCE_SQ = huge
 local PREVIOUS_RETICLE_OVER = nil
 
-local OnReticleOver = function(cb)
+local DEFAULT_CB = function() return 'Set reticle over callback or remove it!' end
+local DEFAULT_LABEL = IMP_LibImplex_C_OnReticleOverLabel
+
+local OnReticleOver = function(cb, label)
+    label = label or DEFAULT_LABEL
+    cb = cb or DEFAULT_CB
+
     return System(
         'reticleover',
         function(entity)
-            if entity.OnReticleOver then
-                local offsetX, offsetY = entity[5], entity[6]
+            local offsetX, offsetY = entity[5], entity[6]
 
-                if offsetX > -16 and offsetX < 16 then
-                    if offsetY > -16 and offsetY < 16 then
-                        local eX, eY, eZ = entity[1], entity[2], entity[3]
+            if offsetX > -16 and offsetX < 16 then
+                if offsetY > -16 and offsetY < 16 then
+                    local eX, eY, eZ = entity[1], entity[2], entity[3]
 
-                        local diffX, diffY, diffZ = prwX - eX, prwY - eY, prwZ - eZ
-                        local distance_sq = diffX * diffX + diffY * diffY + diffZ * diffZ
+                    local diffX, diffY, diffZ = prwX - eX, prwY - eY, prwZ - eZ
+                    local distance_sq = diffX * diffX + diffY * diffY + diffZ * diffZ
 
-                        if distance_sq < RETICLE_OVER_MIN_DISTANCE_SQ then
-                            reticle_over = entity
-                            RETICLE_OVER_MIN_DISTANCE_SQ = distance_sq
-                        end
+                    if distance_sq < RETICLE_OVER_MIN_DISTANCE_SQ then
+                        reticleOverEntity, reticleOverCB, reticleOverLabel = entity, cb, label
+                        RETICLE_OVER_MIN_DISTANCE_SQ = distance_sq
                     end
                 end
             end
         end,
-        LOW_PRIORITY,
-        function(entity)
-            entity.OnReticleOver = cb
-        end,
-        function(entity)
-            entity.OnReticleOver = nil
-        end
+        LOW_PRIORITY
     )
 end
 
 local function registerReticleOverEvents()
     EM.RegisterForEvent('IMP_LibImplex_ReticleOverObject', EM.EVENT_BEFORE_UPDATE, function()
-        reticle_over = nil
+        reticleOverEntity = nil
         RETICLE_OVER_MIN_DISTANCE_SQ = huge
     end)
 
     EM.RegisterForEvent('IMP_LibImplex_ReticleOverObject', EM.EVENT_AFTER_UPDATE, function()
-        if reticle_over ~= PREVIOUS_RETICLE_OVER then
-            if reticle_over then
-                local text = reticle_over:OnReticleOver()
-                IMP_LibImplex_C_OnReticleOverLabel:SetText(text)
-                IMP_LibImplex_C_OnReticleOver:SetHidden(false)
+        if reticleOverEntity ~= PREVIOUS_RETICLE_OVER then
+            if reticleOverEntity then
+                reticleOverLabel:SetText(reticleOverCB(reticleOverEntity))
+                reticleOverLabel:SetHidden(false)
             else
-                IMP_LibImplex_C_OnReticleOver:SetHidden(true)
+                reticleOverLabel:SetHidden(true)
             end
 
-            PREVIOUS_RETICLE_OVER = reticle_over
+            PREVIOUS_RETICLE_OVER = reticleOverEntity
         end
     end)
 end
@@ -488,7 +508,16 @@ local KeepOnPlayersHeight = System(
     function(entity)
         entity[2] = prwY + 200
     end,
-    MEDIUM_PRIORITY
+    -- PRIORITY_FILTER_BY_DISTANCE - 1
+    function(systems)
+        for i = 1, #systems do
+            if systems[i][SYSTEM_ID] == 'filterbydistance' then
+                return PRIORITY_FILTER_BY_DISTANCE - 1
+            end
+        end
+
+        return MEDIUM_PRIORITY
+    end
 )
 
 local FollowThePlayer = function(offsetX, offsetY, offsetZ)
@@ -610,6 +639,8 @@ function Object2DWS:SetPosition(x, y, z)
 
     local control = _controls[self]
     control:SetTransformOffset(Rx, Ry, Rz)
+
+    return self
 end
 
 function Object2DWS:SetRotation(xRad, yRad, zRad)
@@ -631,11 +662,13 @@ end
 
 function Object2DWS:SetTexture(texturePath)
     _controls[self]:SetTexture(texturePath)
+    return self
 end
 
 function Object2DWS:SetDimensions(w, h)
     -- if size then control:SetDimensions(unpack(size)) end
     _controls[self]:SetDimensions(w, h)
+    return self
 end
 
 -- ----------------------------------------------------------------------------
@@ -682,6 +715,8 @@ function Object3DStatic:SetPosition(x, y, z)
 
     local Rx, Ry, Rz = WorldPositionToGuiRender3DPosition(x, y, z)
 	_controls[self]:Set3DRenderSpaceOrigin(Rx, Ry, Rz)
+
+    return self
 end
 
 function Object3DStatic:SetOrientation(xRad, yRad, zRad)
@@ -702,6 +737,8 @@ function Object3DStatic:SetOrientation(xRad, yRad, zRad)
     self[ 8], self[ 9], self[10] = F[1], F[2], F[3]
     self[11], self[12], self[13] = U[1], U[2], U[3]
     self[14], self[15], self[16] = R[1], R[2], R[3]
+
+    return self
 end
 
 function Object3DStatic:CopyOrientation(object)
@@ -715,15 +752,12 @@ end
 
 function Object3DStatic:SetTexture(texturePath)
     _controls[self]:SetTexture(texturePath)
+    return self
 end
 
 function Object3DStatic:SetDimensions(w, h)
     _controls[self]:Set3DLocalDimensions(w, h)
-end
-
-function Object3DStatic:SetColor(r, g, b, a)
-    _controls[self]:SetColor(r, g, b, a)
-    self.color = {r, g, b, a}
+    return self
 end
 
 function Object3DStatic:DrawNormal(length)
@@ -896,10 +930,6 @@ end
 function Line:SetPosition(x1, y1, z1, x2, y2, z2)
     self[1], self[2], self[3] = x1, y1, z1
     self[4], self[5], self[6] = x2, y2, z2
-end
-
-function Line:SetColor(r, g, b, a)
-    _controls[self]:SetColor(r, g, b, a)
 end
 
 -- ----------------------------------------------------------------------------

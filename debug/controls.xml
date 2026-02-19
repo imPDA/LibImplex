@@ -13,7 +13,7 @@
                     <Dimensions y="24" />
                 </Label>
                 <Label name="$(parent)ZoneInfo" font="ZoFontWinH4" wrapMode="TRUNCATE" verticalAlignment="CENTER" text="-">
-                    <Anchor point="LEFT" relativeTo="$(parent)AddonName" relativePoint="RIGHT" offsetX="56" />
+                    <Anchor point="LEFT" relativeTo="$(parent)AddonName" relativePoint="RIGHT" offsetX="36" />
                     <Dimensions y="24" />
 
                     <!-- <Controls>

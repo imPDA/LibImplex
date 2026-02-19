@@ -1,6 +1,6 @@
 local abs = math.abs
 local Vector = LibImplex.Vector
-local Marker2D = LibImplex.Marker.Marker2D
+local Object2D = LibImplex.Objects._2D
 local Line = LibImplex.Lines.Line
 
 local function solve3x3(A, b)
@@ -192,6 +192,7 @@ function RayIntersection:GetIntersection()
     return self.intersection
 end
 
+-- ----------------------------------------------------------------------------
 do
     local RI = RayIntersection()
 
@@ -203,7 +204,7 @@ do
     local PARTIAL = 'Measurements: %d\nNo intersection'
     local COMPLETE = 'Total measurements: %d\nx: %.2f, y: %.2f, z: %.2f\nAverage distance to rays: %.2f cm'
     local MARK_TEXTURE = '/esoui/art/miscellaneous/gamepad/gp_bullet.dds'
-    local MARK_SIZE = {24, 24}
+    local MARK_SIZE = 24
     local MARK_COLOR = {1, 1, 0}
 
     function RI:SetText(text)
@@ -226,13 +227,21 @@ do
         local intersection = self.intersection
         if not intersection then return end
 
-        self.intersectionMark = Marker2D(intersection, nil, MARK_TEXTURE, MARK_SIZE, MARK_COLOR)
+        local im = Object2D()
+        :SetPosition(unpack(intersection))
+        :SetTexture(MARK_TEXTURE)
+        :SetColor(unpack(MARK_COLOR))
+        :SetDimensions(MARK_SIZE, MARK_SIZE)
+
+        self.intersectionMark = im
 
         local measurements = self.measurements
         for i = 1, #measurements do
             local measurement = measurements[i]
             local before, after = self:GetPointsAroundProjection(measurement.position, measurement.direction, intersection)
-            self.lines[i] = Line(before, after)
+            local l = Line(before[1], before[2], before[3], after[1], after[2], after[3])
+            l:SetColor(1, 1, 1, 0.7)
+            self.lines[i] = l
         end
     end
 
@@ -256,11 +265,13 @@ do
         return pointBefore, pointAfter
     end
 
-    LibImplex_RayIntersection:GetNamedChild('Measure'):SetHandler('OnClicked', function()
+    local function measure()
         RI:AddCameraForwardRayToMeasurements()
         RI:DrawObjects()
         RI:ChangeText()
-    end)
+    end
+
+    LibImplex_RayIntersection:GetNamedChild('Measure'):SetHandler('OnClicked', measure)
 
     LibImplex_RayIntersection:GetNamedChild('R'):SetHandler('OnClicked', function()
         RI:RemoveLastMeasurement()
@@ -273,6 +284,23 @@ do
         RI:DrawObjects()
         RI:ChangeText()
     end)
+
+    local function toggleVisibility()
+        local hidden = LibImplex_RayIntersection:IsHidden()
+        LibImplex_RayIntersection:SetHidden(not hidden)
+
+        -- if not hidden then
+        --     RI:ClearMeasurements()
+        --     RI:DrawObjects()
+        --     RI:ChangeText()
+        -- end
+    end
+
+    SLASH_COMMANDS['/rayintersection'] = toggleVisibility
+
+    -- global for keybinds
+    LibImplex_RayIntersection_Measure = measure
+    LibImplex_RayIntersection_ToggleVisibility = toggleVisibility
 end
 
 LibImplex.RayIntersection = RayIntersection
