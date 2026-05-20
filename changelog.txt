@@ -1,3 +1,9 @@
+V. 24
+- Execution time now measured with GetGameTimeSeconds
+- Some quaternion computations replaced with rotation matrix
+- Added new methods RotateVectorByEuler, ComputeRotationMatrix, ApplyRotationMatrix
+- Changed writing module to test if it is possible effectively draw changing text in real time
+
 V. 23
 - added ray intersection tool and keybinds for it
 - added subzoneId in debug window

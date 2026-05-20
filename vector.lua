@@ -148,7 +148,53 @@ local function RotateVectorByQuaternion(v, q)
     return Vector({result_quat[2], result_quat[3], result_quat[4]})
 end
 
+local function ComputeRotationMatrix(roll, pitch, yaw)
+    local cr, sr = cos(roll), sin(roll)
+    local cp, sp = cos(pitch), sin(pitch)
+    local cy, sy = cos(yaw), sin(yaw)
+
+    return {
+        cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr,
+        sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr,
+        -sp,     cp * sr,                  cp * cr
+    }
+end
+
+local function ApplyRotationMatrix(M, vx, vy, vz)
+    local rx = M[1] * vx + M[2] * vy + M[3] * vz
+    local ry = M[4] * vx + M[5] * vy + M[6] * vz
+    local rz = M[7] * vx + M[8] * vy + M[9] * vz
+
+    return rx, ry, rz
+end
+
+local function RotateVectorByEuler(vx, vy, vz, roll, pitch, yaw)
+    local cr, sr = cos(roll), sin(roll)
+    local cp, sp = cos(pitch), sin(pitch)
+    local cy, sy = cos(yaw), sin(yaw)
+
+    -- XYZ order: Rz * Ry * Rx
+    local r11 = cy * cp
+    local r12 = cy * sp * sr - sy * cr
+    local r13 = cy * sp * cr + sy * sr
+    local r21 = sy * cp
+    local r22 = sy * sp * sr + cy * cr
+    local r23 = sy * sp * cr - cy * sr
+    local r31 = -sp
+    local r32 = cp * sr
+    local r33 = cp * cr
+
+    local rx = r11 * vx + r12 * vy + r13 * vz
+    local ry = r21 * vx + r22 * vy + r23 * vz
+    local rz = r31 * vx + r32 * vy + r33 * vz
+
+    return rx, ry, rz
+end
+
 Quaternion.RotateVectorByQuaternion = RotateVectorByQuaternion
+Quaternion.RotateVectorByEuler = RotateVectorByEuler
+Quaternion.ComputeRotationMatrix = ComputeRotationMatrix
+Quaternion.ApplyRotationMatrix = ApplyRotationMatrix
 
 function Quaternion:Rotate(v)
     return RotateVectorByQuaternion(v, self)

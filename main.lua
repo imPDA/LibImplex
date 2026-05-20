@@ -61,13 +61,13 @@ function lib:OnPlayerActivated(initial)
 		local function timeIt(func)
 			local function inner()
 				local repetitions = self.sv.repetitions
-				local start = GetGameTimeMilliseconds()
+				local start = GetGameTimeSeconds() * 1000
 
 				for _ = 1, repetitions do
 					func()
 				end
 
-				local finish = GetGameTimeMilliseconds()
+				local finish = GetGameTimeSeconds() * 1000
 				counter = counter + 1
 				updateArray[counter] = (finish - start) / repetitions
 			end

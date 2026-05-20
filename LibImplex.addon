@@ -1,8 +1,8 @@
 ## Title: |cAFD3FFLibImplex|r
 ## Description: Simple (hope so) marker "engine"
 ## Author: |c7c42f2imPDA|r
-## AddOnVersion: 23
-## APIVersion: 101048
+## AddOnVersion: 24
+## APIVersion: 101049
 ## IsLibrary: true
 ## SavedVariables: LibImplexSavedVariables
 ## OptionalDependsOn: LibDebugLogger>=268 LibAddonMenu-2.0>=41 LibSubzones>=1
@@ -40,6 +40,8 @@ rayintersection/bindings.xml
 ; examples/rotations.lua
 ; examples/text.lua
 ; examples/worldspace.lua
+; examples/dimensions.lua
+; examples/circle.lua
 
 ; v2
 ; examples/snake.lua

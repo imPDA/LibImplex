@@ -1,7 +1,9 @@
 local utf8len = utf8.len
 local utf8off = utf8.offset
 
-local Q = LibImplex.Q
+local ComputeRotationMatrix = LibImplex.Q.ComputeRotationMatrix
+local ApplyRotationMatrix = LibImplex.Q.ApplyRotationMatrix
+local Vector = LibImplex.Vector
 
 local writingContext = LibImplex.Objects('writing')
 
@@ -74,8 +76,11 @@ function Text:__init(text, anchorPoint, position, orientation, size, color, maxW
     self.size = size or 1
     self.color = color or {1, 1, 1}
     self.maxWidth = maxWidth
+    self.rows = {}
 
-    self:Orient(orientation or {0, 0, 0})
+    -- self:Orient(orientation or {0, 0, 0})
+    orientation = orientation or {0, 0, 0}
+    self:SetOrientation(unpack(orientation))
     self.useDepthBuffer = orientation[4]
 
     self.enableOutline = enableOutline
@@ -188,7 +193,7 @@ function Text:SplitToRows()
         end
 
         if #words > 0 then
-            self.rows[#self.rows+1] = {words, currentRowWidth}
+            self.rows[#self.rows+1] = {words, currentRowWidth, objects={}}  -- TODO: move object to array part
             words = {}
             currentRowWidth = 0
         end
@@ -207,6 +212,8 @@ function Text:RenderRow(index, position)
     local cursor = position
 
     local objectFactory = self.objectFactory
+    self.rows[index].objects = {}  -- TODO: clear table of something like that
+    local objects = self.rows[index].objects
     for i = 1, rowLength do
         local word = row[i]
         local wordLength = #word
@@ -223,8 +230,10 @@ function Text:RenderRow(index, position)
             letterObject:SetTexture(texture)
             letterObject:SetDimensions(w, h)
             letterObject:SetColor(unpack(self.color))
-            letterObject:AddSystem(LibImplex.Systems.DepthBuffer)
-            letterObject.control:SetTextureCoords(left, right, top, bottom)
+            letterObject.control:SetTextureCoords(left, right, top, bottom)  -- TODO: TURN BACK ON, and then add check
+            if self.useDepthBuffer then
+                letterObject:AddSystem(LibImplex.Systems.DepthBuffer)
+            end
             -- letterObject.control:SetDrawLevel(self.drawLevel)
             -- letterObject.width = w
             -- letterObject.height = h
@@ -238,11 +247,80 @@ function Text:RenderRow(index, position)
                 cursor = cursor + r * letterSpacing
             end
 
-            self.objects[#self.objects+1] = letterObject
+            objects[#objects+1] = letterObject
         end
 
         if i < rowLength then
             cursor = cursor + r * spaceWidth
+        end
+    end
+end
+
+function Text:RerenderRow(index, position)  -- TODO:  better naming, it just for a situation when text rotated and nothing else changed
+    local spaceWidth = SPACE_WIDTH * self.size
+    local letterSpacing = LETTER_SPACING * self.size
+
+    local row = self.rows[index][1]
+    local rowLength = #row
+
+    local r_x, r_y, r_z = unpack(self.R)
+    local orientation1, orientation2, orientation3 = unpack(self.orientation)
+    -- local color1, color2, color3 = unpack(self.color)
+
+    -- local cursor = position
+    local c_x, c_y, c_z = unpack(position)
+    local objects = self.rows[index].objects
+    local o = 1
+    for i = 1, rowLength do
+        local word = row[i]
+        local wordLength = #word
+
+        for j = 1, wordLength do
+            local texture, w, h, left, right, top, bottom = self.font:Get(word[j], self.size)
+
+            -- cursor = cursor + r * w * 50
+            c_x = c_x + r_x * w * 50
+            c_y = c_y + r_y * w * 50
+            c_z = c_z + r_z * w * 50
+
+            local letterObject = objects[o]
+            -- letterObject:SetPosition(unpack(cursor))
+            letterObject:SetPosition(c_x, c_y, c_z)
+            letterObject:SetOrientation(orientation1, orientation2, orientation3)
+
+            -- letterObject:SetTexture(texture)
+            -- letterObject:SetDimensions(w, h)
+            -- letterObject:SetColor(color1, color2, color3)
+            -- letterObject:AddSystem(LibImplex.Systems.DepthBuffer)
+
+            -- letterObject.control:SetTextureCoords(left, right, top, bottom)  -- TODO: TURN BACK ON, and then add check
+            -- letterObject.control:SetDrawLevel(self.drawLevel)
+            -- letterObject.width = w
+            -- letterObject.height = h
+
+            -- TODO: add function to draw normal for text object, not for each letter separately
+            -- letterObject:DrawNormal(300)
+
+            -- cursor = cursor + r * w * 50
+            c_x = c_x + r_x * w * 50
+            c_y = c_y + r_y * w * 50
+            c_z = c_z + r_z * w * 50
+
+            if i < wordLength then
+                -- cursor = cursor + r * letterSpacing
+                c_x = c_x + r_x * letterSpacing
+                c_y = c_y + r_y * letterSpacing
+                c_z = c_z + r_z * letterSpacing
+            end
+
+            o = o + 1
+        end
+
+        if i < rowLength then
+            -- cursor = cursor + r * spaceWidth
+            c_x = c_x + r_x * spaceWidth
+            c_y = c_y + r_y * spaceWidth
+            c_z = c_z + r_z * spaceWidth
         end
     end
 end
@@ -254,6 +332,10 @@ local ALLOWED_ANCHOR_POINTS = {
 }
 
 function Text:Render()
+    collectgarbage('stop')
+
+    -- self:SplitToRows()  -- moved before wiping, because wipe iterates over rows
+
     self:Wipe()
     self.rowHeight = self.size * 100  -- TODO: move to new place since font simplified things a bit
 
@@ -287,6 +369,8 @@ function Text:Render()
     if self.enableOutline then
         self:Outline()
     end
+
+    collectgarbage('restart')
 end
 
 function Text:Outline()
@@ -311,7 +395,11 @@ function Text:RemoveOutline()
 end
 
 function Text:Rerender()
-    if #self.objects > 0 then
+    -- for _ in self:_iterObjects() do  -- TODO: better way to know if it contains anything?
+    --     self:Render()
+    -- end
+
+    if #self.rows > 0 then
         self:Render()
     end
 end
@@ -337,35 +425,101 @@ function Text:SetDrawLevel(drawLevel)
     self:Rerender()
 end
 
-function Text:Orient(orientation)
+-- TODO: not x, y, z
+function Text:SetOrientation(x, y, z)
     -- TODO: recheck if I can do something with it
     -- self.orientation = {orientation[3], orientation[2], orientation[1], orientation[4]}
-    self.orientation = {orientation[3], orientation[2], orientation[1]}
+    self.orientation = {z, y, x}
 
-    local q = Q.FromEuler(unpack(self.orientation))
+    local M = ComputeRotationMatrix(z, y, x)
+    self.R = Vector({ApplyRotationMatrix(M, 1, 0, 0)})
+    self.U = Vector({ApplyRotationMatrix(M, 0, 1, 0)})
+    self.F = Vector({ApplyRotationMatrix(M, 1, 0, 1)})
 
-    self.R = Q.RotateVectorByQuaternion({1, 0, 0}, q)
-    self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
-    self.F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
+    -- local q = Q.FromEuler(unpack(self.orientation))
 
-    self:Rerender()
+    -- self.R = Q.RotateVectorByQuaternion({1, 0, 0}, q)
+    -- self.U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
+    -- self.F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
+end
+
+function Text:Orient(orientation)
+    self:SetOrientation(unpack(orientation))
+
+    local r = self.R
+    local u = self.U
+
+    local RH = self.rowHeight
+
+    -- self:SplitToRows()
+
+    local START_POSITION = self.position - u * RH * 0.5  -- + RIGHT * W * 50
+
+    if self.anchorPoint == CENTER then
+        START_POSITION = START_POSITION + u * RH * #self.rows * 0.5
+    end
+
+    -- for i = 1, #self.rows do
+    --     if self.anchorPoint == TOPLEFT then
+    --         self:RenderRow(i, START_POSITION - u * ((i-1) * RH))
+    --     elseif self.anchorPoint == TOP or self.anchorPoint == CENTER then
+    --         self:RenderRow(i, START_POSITION - u * ((i-1) * RH) - r * (self.rows[i][2] * 0.5))
+    --     elseif self.anchorPoint == LEFT then
+    --         self:RenderRow(i, START_POSITION + u * RH * 0.5)
+    --     elseif self.anchorPoint == RIGHT then
+    --         self:RenderRow(i, START_POSITION + u * RH * 0.5 - r * (self.rows[i][2]))
+    --     elseif self.anchorPoint == BOTTOM then
+    --         self:RenderRow(i, START_POSITION + u * RH - r * (self.rows[i][2] * 0.5))
+    --     end
+    -- end
+
+    for i = 1, #self.rows do
+        if self.anchorPoint == TOPLEFT then
+            self:RerenderRow(i, START_POSITION - u * ((i-1) * RH))
+        elseif self.anchorPoint == TOP or self.anchorPoint == CENTER then
+            self:RerenderRow(i, START_POSITION - u * ((i-1) * RH) - r * (self.rows[i][2] * 0.5))
+        elseif self.anchorPoint == LEFT then
+            self:RerenderRow(i, START_POSITION + u * RH * 0.5)
+        elseif self.anchorPoint == RIGHT then
+            self:RerenderRow(i, START_POSITION + u * RH * 0.5 - r * (self.rows[i][2]))
+        elseif self.anchorPoint == BOTTOM then
+            self:RerenderRow(i, START_POSITION + u * RH - r * (self.rows[i][2] * 0.5))
+        end
+    end
+
+    if self.enableOutline then
+        self:Outline()
+    end
+
+    -- self:Rerender()
+end
+
+function Text:_iterObjects()
+    return coroutine.wrap(function()
+        for i = 1, #self.rows do
+            local objects = self.rows[i].objects
+            for j = 1, #objects do
+                coroutine.yield(objects[j])
+            end
+        end
+    end)
 end
 
 function Text:SetAlpha(alpha)
     self.alpha = alpha
 
-    local objects = self.objects
-    for i = 1, #objects do
-        objects[i]:SetAlpha(alpha)
+    for object in self:_iterObjects() do
+        object:SetAlpha(alpha)
     end
 end
 
+
 function Text:SetColor(color)
     self.color = color
+    local r, g, b, a = unpack(color)
 
-    local objects = self.objects
-    for i = 1, #objects do
-        objects[i]:SetColor(unpack(color))
+    for object in self:_iterObjects() do
+        object:SetColor(r, g, b, a)
     end
 end
 
@@ -376,10 +530,14 @@ function Text:SetMaxWidth(maxWidth)
 end
 
 function Text:Wipe()
-    for i = 1, #self.objects do
-        self.objects[i]:Delete()
-        self.objects[i] = nil
+    for r = 1, #self.rows do
+        local row = self.rows[r]
+        for i = 1, #row.objects do
+            row.objects[i]:Delete()
+        end
     end
+
+    self.rows = {}
 
     self:RemoveOutline()
 end

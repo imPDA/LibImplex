@@ -14,6 +14,8 @@ local class = LibImplex.class
 local Vector = LibImplex.Vector
 local Q = LibImplex.Q
 local EM = LibImplex.EVENT_MANAGER
+local ComputeRotationMatrix = Q.ComputeRotationMatrix
+local ApplyRotationMatrix = Q.ApplyRotationMatrix
 
 local sqrt = math.sqrt
 local tbl_remove = table.remove
@@ -644,17 +646,15 @@ function Object2DWS:SetPosition(x, y, z)
 end
 
 function Object2DWS:SetRotation(xRad, yRad, zRad)
-    local q = Q.FromEuler(xRad, yRad, zRad)
-
-    local F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
-    local U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
-    local R = Q.RotateVectorByQuaternion({-1, 0, 0}, q)
+    -- local q = Q.FromEuler(xRad, yRad, zRad)
 
     -- TOThink: remember rotations?
     self[ 4], self[ 5], self[ 6] = xRad, yRad, zRad
-    self[ 8], self[ 9], self[10] = F[1], F[2], F[3]
-    self[11], self[12], self[13] = U[1], U[2], U[3]
-    self[14], self[15], self[16] = R[1], R[2], R[3]
+
+    local M = ComputeRotationMatrix(xRad, yRad, zRad)
+    self[ 8], self[ 9], self[10] = ApplyRotationMatrix(M,  0, 0, 1)
+    self[11], self[12], self[13] = ApplyRotationMatrix(M, -1, 0, 0)
+    self[14], self[15], self[16] = ApplyRotationMatrix(M,  0, 1, 0)
 
     local control = _controls[self]
     control:SetTransformRotation(xRad, yRad, zRad)
@@ -726,17 +726,13 @@ function Object3DStatic:SetOrientation(xRad, yRad, zRad)
 
     _controls[self]:Set3DRenderSpaceOrientation(xRad, yRad, zRad)
 
-    local q = Q.FromEuler(xRad, yRad, zRad)
-
-    local F = Q.RotateVectorByQuaternion({0, 0, 1}, q)
-    local R = Q.RotateVectorByQuaternion({-1, 0, 0}, q)
-    local U = Q.RotateVectorByQuaternion({0, 1, 0}, q)
-
     -- TOThink: remember rotations?
     self[ 4], self[ 5], self[ 6] = xRad, yRad, zRad
-    self[ 8], self[ 9], self[10] = F[1], F[2], F[3]
-    self[11], self[12], self[13] = U[1], U[2], U[3]
-    self[14], self[15], self[16] = R[1], R[2], R[3]
+
+    local M = ComputeRotationMatrix(xRad, yRad, zRad)
+    self[ 8], self[ 9], self[10] = ApplyRotationMatrix(M,  0, 0, 1)
+    self[11], self[12], self[13] = ApplyRotationMatrix(M, -1, 0, 0)
+    self[14], self[15], self[16] = ApplyRotationMatrix(M,  0, 1, 0)
 
     return self
 end
