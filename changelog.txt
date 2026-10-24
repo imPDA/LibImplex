@@ -1,3 +1,6 @@
+V. 25
+- `EVENT_MANAGER:UnregisterForEvent` fix
+
 V. 24
 - Execution time now measured with GetGameTimeSeconds
 - Some quaternion computations replaced with rotation matrix
